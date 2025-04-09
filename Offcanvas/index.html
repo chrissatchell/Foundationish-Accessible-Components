@@ -1,0 +1,1011 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Offcanvas - Foundation(ish) Accessible Components</title>
+	</head>
+	<body>
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reset-css@5.0.2/reset.min.css" />
+
+		<style class="base-styles">
+			/* Base */
+
+			:root {
+				--font-family: sans-serif;
+			}
+
+			body {
+				font-family: var(--font-family);
+				min-height: 100%;
+				line-height: 1.5;
+				margin: 0;
+				padding: 0;
+				color: #111;
+				background-color: #ccc;
+			}
+
+			main,
+			footer {
+				padding: 1rem;
+			}
+
+			header {
+				background-color: #fff;
+				box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+				padding: 1em;
+			}
+
+			.site-navigation.fndish-offcanvas--is-resting > ul,
+			.site-navigation.fndish-offcanvas--is-resting .fndish-offcanvas-content > ul {
+				display: flex;
+				gap: 1rem;
+			}
+		</style>
+
+		<style id="dropdown-styles">
+			/**
+		     * 	FndishDropDown Styles
+		     */
+
+			:root {
+				--fndish-dropdown-icon-duration: 0.25s;
+				--fndish-dropdown-panel-duration: 0.25s;
+			}
+
+			.fndish-js-dropdown-menu {
+				@keyframes submenu-fadein {
+					from {
+						opacity: 0;
+					}
+					to {
+						opacity: 1;
+					}
+				}
+
+				& ul[id*='list-submenu'] {
+					background: #fff;
+					list-style: none;
+					position: absolute;
+					padding: 1.25rem 0.625rem;
+					min-width: 16.25rem;
+					margin-left: 0;
+					margin-top: 0;
+				}
+
+				& > ul > li > ul:not([hidden]),
+				& ul > li > ul:not([hidden]) {
+					animation: submenu-fadein var(--fndish-dropdown-panel-duration) linear forwards;
+				}
+
+				& .menu-item-has-children:after {
+					display: none;
+				}
+
+				li.menu-item-has-children .fndish-js-dropdown-menu__discloser-trigger-wrapper {
+					display: flex;
+					align-items: center;
+					color: $primary-color;
+				}
+
+				li.menu-item-has-children .fndish-js-dropdown-menu__discloser-trigger-wrapper a {
+					list-style: none;
+					text-decoration: none;
+					cursor: pointer;
+					display: block;
+					font-weight: 600;
+					padding: 0 0.125rem;
+					padding-right: 0.45em;
+					transition: color 0.25s;
+				}
+
+				& button:not([hidden]) {
+					font: inherit;
+					border: none;
+					background: none;
+					display: flex;
+					gap: 0.5em;
+					align-items: center;
+					cursor: pointer;
+					padding: 0.25rem 0.3rem;
+					color: inherit;
+					font-weight: bold;
+					border-radius: 5px;
+					transform: translateX(-4px);
+					color: inherit;
+				}
+
+				& button:hover {
+					background-color: #eee;
+				}
+
+				& button[aria-expanded='true'] {
+					__background-color: #eee;
+				}
+
+				& button svg {
+					color: inherit;
+					transition: transform var(--fndish-dropdown-icon-duration) ease-out;
+				}
+
+				& button[aria-expanded='true'] svg {
+					transform: rotate(180deg);
+				}
+
+				& button:focus-visible,
+				& a:focus-visible {
+					outline: 2px solid;
+					outline-offset: 2px;
+				}
+			}
+		</style>
+
+		<style id="offcanvas-styles">
+			/* Off-Canvas  */
+
+			@keyframes offcanvas-submenu-fadein {
+				from {
+					opacity: 0;
+					max-height: 0.1px;
+				}
+				to {
+					opacity: 1;
+					max-height: 1000px;
+				}
+			}
+
+			.fndish-offcanvas.fndish-offcanvas--is-active {
+				& ul:not([hidden]) {
+					list-style: none;
+					display: flex;
+					padding: 0;
+					position: relative;
+
+					/* .enhanced  */
+					margin: 0;
+					background: #fff;
+					min-width: -webkit-max-content;
+					min-width: -moz-max-content;
+					min-width: max-content;
+					color: #111;
+
+					flex-direction: column;
+				}
+
+				& li:has(> ul) {
+					position: relative;
+
+					& ul[id] {
+						opacity: 0;
+						max-height: 0.1px;
+					}
+
+					& ul:not([hidden]) {
+						padding-left: 1.5rem;
+						animation: offcanvas-submenu-fadein 0.25s 0.1s ease-in-out forwards;
+					}
+
+					& li {
+						display: block;
+						margin: 0;
+					}
+
+					& button {
+						display: inline-flex;
+						margin-left: auto;
+						width: auto;
+						transform: none;
+					}
+				}
+
+				& a,
+				& li > span {
+					color: inherit;
+				}
+
+				& a {
+					font-weight: 400;
+					text-decoration: none;
+					padding: 0.35rem 0;
+					display: block;
+				}
+
+				& .fndish-offcanvas-content {
+					& > ul {
+						padding-top: 1.5rem;
+					}
+				}
+
+				& .fndish-js-dropdown-menu__discloser-trigger-wrapper {
+					& a {
+						flex: 1 0 auto;
+						padding: 0.35rem 0;
+						font-weight: 400;
+					}
+				}
+
+				& ul {
+				}
+
+				@media all and (max-width: 1200px) {
+					& .nav-content {
+						transition:
+							transform 0.9s ease-in-out,
+							box-shadow 0.6s ease-out;
+					}
+
+					& .nav-content {
+						position: fixed;
+						z-index: 10;
+						width: min(300px, 75vw);
+						inset: 0 auto 0 0;
+						overflow-y: auto;
+						background: #fff;
+						padding: 1rem 1.5rem;
+						display: flex;
+						flex-direction: column;
+						box-shadow: 0 0 0 150vmax rgba(0, 0, 0, 0);
+
+						transform: translate3d(-100%, 0, 0);
+						transition:
+							transform 0.5s cubic-bezier(0.42, 0, 0.58, 1),
+							-webkit-transform 0.5s cubic-bezier(0.42, 0, 0.58, 1);
+						will-change: transform;
+					}
+
+					& .nav-toggle[aria-expanded='true'] + .nav-content {
+						transform: translate3d(0, 0, 0);
+						box-shadow: 0 0 0 150vmax rgba(0, 0, 0, 0.75);
+					}
+
+					& .fndish-offcanvas-close {
+						width: -webkit-max-content;
+						width: -moz-max-content;
+						width: max-content;
+						align-self: flex-end;
+					}
+
+					& nav ul[role='list'] {
+						list-style: none;
+						padding: 0;
+						margin: 0;
+						display: block;
+					}
+					& nav ul[role='list'][hidden] {
+						display: none;
+					}
+
+					& nav {
+						display: flex;
+						width: 100%;
+						flex-direction: column;
+						grid-column: 2;
+						z-index: 10;
+					}
+
+					& nav li,
+					& nav button {
+						position: static;
+						display: block;
+						width: 100%;
+					}
+
+					& .nav-toggle {
+						width: -webkit-max-content;
+						width: -moz-max-content;
+						width: max-content;
+						border: none;
+						padding: 0.5em 0.25em;
+					}
+					& .nav-toggle[aria-expanded='true'] {
+						border: none;
+						margin-bottom: 0.5em;
+					}
+					& .nav-toggle[aria-expanded='true'] svg {
+						transform: none;
+					}
+
+					& nav button,
+					& nav a {
+						padding: 0.75rem 0;
+						text-align: left;
+						display: flex;
+						justify-content: space-between;
+					}
+
+					& nav.enhanced .nav-content > ul > li > ul {
+						position: static;
+						box-shadow: none;
+						padding-left: 1rem;
+					}
+
+					& nav ul {
+						display: block;
+					}
+
+					& nav li,
+					& button[aria-expanded='true'] {
+						border-bottom: 1px solid #ccc;
+					}
+
+					& nav li:last-of-type {
+						border-bottom: none;
+					}
+				}
+			}
+		</style>
+
+		<header id="main-header">
+			<nav aria-label="Site Navigation" id="site-nav" class="fndish-offcanvas site-navigation">
+				<button id="nav-toggle" class="fndish-offcanvas-toggle nav-toggle" aria-expanded="false" hidden>
+					<svg aria-hidden="true" height="21" viewBox="0 0 24 24" width="24" style="color: inherit">
+						<path d="M3 13h18c0.552 0 1-0.448 1-1s-0.448-1-1-1h-18c-0.552 0-1 0.448-1 1s0.448 1 1 1zM3 7h18c0.552 0 1-0.448 1-1s-0.448-1-1-1h-18c-0.552 0-1 0.448-1 1s0.448 1 1 1zM3 19h18c0.552 0 1-0.448 1-1s-0.448-1-1-1h-18c-0.552 0-1 0.448-1 1s0.448 1 1 1z" fill="currentColor"></path>
+					</svg>
+
+					<span>Navigation</span>
+				</button>
+
+				<div id="nav-content" class="fndish-offcanvas-content nav-content">
+					<button id="fndish-offcanvas-close" class="fndish-offcanvas-close" hidden>Close</button>
+
+					<ul role="list">
+						<li role="listitem" class="menu-item menu-item-has-children" data-has-children>
+							<a href="#">Products</a>
+
+							<ul role="list">
+								<li>
+									<a href="/home/" aria-current="page">Kitchen</a>
+								</li>
+
+								<li>
+									<a href="/home/">Bathroom</a>
+								</li>
+
+								<li data-has-children>
+									<a href="/">Personal Care</a>
+									<ul role="list">
+										<li><a href="#">Hair care</a></li>
+										<li><a href="#">Face care</a></li>
+									</ul>
+								</li>
+							</ul>
+						</li>
+
+						<li role="listitem" class="menu-item menu-item-has-children" data-has-children>
+							<a href="#">Team</a>
+
+							<ul role="list">
+								<li><a href="/home/">Get to know us</a></li>
+								<li><a href="/home/">Contact us</a></li>
+							</ul>
+						</li>
+
+						<li role="listitem">
+							<a href="#">Press</a>
+						</li>
+					</ul>
+				</div>
+			</nav>
+		</header>
+
+		<main id="main">
+			<p>Lorem ipsum dolor sit amet consectetur adipisicing elit. <a href="#">a link</a> Eaque veniam esse dolores cupiditate. Corrupti quam deleniti commodi porro natus accusantium perspiciatis voluptates officia sit rerum, placeat eum, illum quisquam. Amet?</p>
+		</main>
+
+		<footer id="main-footer">
+			<p>Site Footer</p>
+		</footer>
+
+		<script>
+			/**
+			 * Navigation Drop-down Menu Accessibility Upgrade
+			 */
+
+			class FndishDropDown {
+				/**
+				 * Class fields.
+				 */
+
+				#defaultIcon = `<svg aria-hidden="true" width="1em" height="1em" fill="currentColor" viewBox="0 0 448 512"><path d="M201.4 342.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 274.7 86.6 137.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z"/></svg>`;
+
+				#defaultHoverDisplayDelay = 175;
+
+				/**
+				 * Class constructor
+				 * @params  {Object}  unnamed  The object used for setting and configuring the class.
+				 * @prop    {HTMLElement}  nav  The targeted site navgation. Required.
+				 * @prop    {Boolean}  addHover  Display the dropdowns on hover.
+				 * @prop    {String}  toggleButtonIcon  Customize the dropdown toggle button icon.
+				 */
+
+				constructor({ nav, addHover = false, toggleButtonIcon = null, hoverDisplayDelay = 175, offcanvasIsActiveSelector = false, offcanvasPreventDropdownAutoCollapse = false }) {
+					/* Class properties */
+					this.icon = toggleButtonIcon ?? this.#defaultIcon;
+					this.nav = nav ?? false;
+					this.navID = this.utils.generateID('nav-');
+					this.jsEnhancedClass = 'fndish-js-dropdown-menu';
+					this.addHover = addHover ?? false;
+					this.hoverDisplayDelay = hoverDisplayDelay ?? this.#defaultHoverDisplayDelay;
+
+					// Play nice wth AccOffCanvas
+					this.offcanvasIsActiveSelector = offcanvasIsActiveSelector ?? false;
+					this.offcanvasPreventDropdownAutoCollapse = offcanvasPreventDropdownAutoCollapse ?? false;
+
+					/* Define variables */
+					let $nav = document.querySelector(this.nav);
+					let navID = this.utils.generateID('nav-');
+					let jsEnhancedClass = 'fndish-js-dropdown-menu';
+
+					/* Add classes and ID's to the navigation element */
+					$nav.classList.add('enhanced', jsEnhancedClass);
+					$nav.id = navID;
+
+					/* Create Dropdowns */
+					this.createDropdowns();
+
+					/* Close Dropdowns */
+					this.closeDropdowns();
+
+					/* Add hover support */
+					this.supportHover();
+				}
+
+				/**
+				 * Utilities
+				 * @return  {Object}  Utility methods
+				 *
+				 * generateID
+				 * @param  {String}  prefix  Add a custom string to the start of the ID.
+				 * @return {String}
+				 *
+				 * hasFocusWithin
+				 * @param  {HTMLElement}  element  Check if there is focus is within a chosen element.
+				 * @return {Boolean}
+				 *
+				 * getCSSCustomProperty
+				 * @param  {String}  propertyName  The name of the CSS custom property to retreive.
+				 * @return {String}  propertyValue  The value of the property.
+				 */
+
+				get utils() {
+					return {
+						generateID(prefix = '') {
+							return prefix + Math.floor(Math.random() * 999);
+						},
+
+						hasFocusWithin(element) {
+							return element.contains(document.activeElement);
+						},
+
+						getCSSCustomProperty(propertyName) {
+							// Get the value of the specified CSS custom property
+							let propertyValue = getComputedStyle(document.documentElement).getPropertyValue(`--${propertyName}`) ?? false;
+
+							// Return the property value
+							return propertyValue;
+						},
+					};
+				}
+
+				/**
+				 * Create the disclosure widget for the dropdowns.
+				 */
+
+				createDropdowns() {
+					var _this = this;
+
+					var { nav, navID, icon, jsEnhancedClass, toggleDropdown } = this;
+
+					var { hasFocusWithin } = this.utils;
+
+					let $nav = document.querySelector(nav);
+
+					let $listitems = $nav.querySelectorAll('li.menu-item.menu-item-has-children');
+
+					$listitems.forEach(function ($listitem, index) {
+						// Get the dropdown sub-menu
+						const $dropdown = $listitem.querySelector(':scope > ul');
+
+						// Then add an ID to the dropdown sub-menu
+						$dropdown.setAttribute('id', navID + '-list-submenu--' + index);
+
+						// And hide the dropdown sub-menu
+						$dropdown.setAttribute('hidden', '');
+
+						// Get the top-level link of the listitem
+						let link = $listitem.querySelector(':scope > a');
+
+						// And then add an ID to the link
+						link.setAttribute('id', navID + '-anchor--' + index);
+
+						// Create a div which will be used for styling purposes only
+						let trigger_wrapper = document.createElement('div');
+
+						// Then add a class
+						trigger_wrapper.classList.add('wrapper', `${jsEnhancedClass}__discloser-trigger-wrapper`);
+
+						// Then wrap the link in the .wrapper div
+						$listitem.insertBefore(trigger_wrapper, link);
+						trigger_wrapper.appendChild(link);
+
+						// Create a button to be used as the dropdown submenu display toggle.
+						let $discloser_trigger = document.createElement('button');
+						$discloser_trigger.setAttribute('aria-expanded', 'false');
+						$discloser_trigger.setAttribute('aria-labelledby', link.getAttribute('id'));
+						$discloser_trigger.setAttribute('aria-controls', $dropdown.getAttribute('id'));
+						$discloser_trigger.innerHTML += icon;
+
+						trigger_wrapper.appendChild($discloser_trigger);
+
+						// Create submenu wrapper
+						// let panel_wrapper = document.createElement('div');
+						// panel_wrapper.classList.add(`${jsEnhancedClass}__discloser-panel-wrapper`);
+						// $listitem.insertBefore(panel_wrapper, $dropdown);
+
+						// Listen for a click event on the dropdown submenu display toggle button
+						$discloser_trigger.addEventListener('click', function (e) {
+							toggleDropdown.call(_this, $discloser_trigger, $dropdown);
+						});
+
+						// Listen for an Escape keydown event within the dropdown submenu
+						$dropdown.addEventListener(
+							'keydown',
+							function (e) {
+								// So that only the list itself closes, not its parent list
+								// (in the case of 3+ levels deep nested links)
+								e.stopImmediatePropagation();
+
+								// Escape key
+								if (e.keyCode === 27 && hasFocusWithin($dropdown)) {
+									toggleDropdown.call(_this, $discloser_trigger, $dropdown);
+
+									$discloser_trigger.focus();
+								}
+							},
+							false,
+						);
+					});
+				}
+
+				/**
+				 *  Toggle the display of the dropdowns.
+				 */
+
+				toggleDropdown($disclose_trigger_button, $dropdown_submenu) {
+					// let { onExpandedDropdownCallback } = this;
+
+					let onExpandedDropdownEvent = new CustomEvent('onExpandedDropdown', {
+						bubbles: true,
+						cancelable: true,
+					});
+
+					let onCollapsedDropdownEvent = new CustomEvent('onCollapsedDropdown', {
+						bubbles: true,
+						cancelable: true,
+					});
+
+					// Collapse the dropdown.
+
+					if ($disclose_trigger_button.getAttribute('aria-expanded') === 'true') {
+						$disclose_trigger_button.setAttribute('aria-expanded', 'false');
+
+						$dropdown_submenu.setAttribute('hidden', '');
+
+						// Dispatch custom event when the dropdown is closed (collapses).
+						$disclose_trigger_button.dispatchEvent(onCollapsedDropdownEvent);
+
+						return true;
+					}
+
+					// Expand the dropdown.
+					else {
+						$disclose_trigger_button.setAttribute('aria-expanded', 'true');
+
+						$dropdown_submenu.removeAttribute('hidden');
+
+						// Dispatch custom event when the dropdown is displayed.
+						$disclose_trigger_button.dispatchEvent(onExpandedDropdownEvent);
+
+						return false;
+					}
+				}
+
+				/**
+				 *  Close dropdowns.
+				 *  Setup additional settings for when to hide the dropdowns using a keyboard input.
+				 */
+
+				closeDropdowns() {
+					let { nav, offcanvasPreventDropdownAutoCollapse, offcanvasIsActiveSelector } = this;
+
+					let { hasFocusWithin } = this.utils;
+
+					let $nav = document.querySelector(nav);
+
+					let $dropdowns = $nav.querySelectorAll('li.menu-item.menu-item-has-children > ul');
+
+					// NOTE: If user tabs out of the navigation, close all open $dropdowns.
+
+					document.addEventListener('keyup', function (event) {
+						let target = event.target;
+
+						// Tab key
+						if (event.keyCode === 9 && !hasFocusWithin($nav) && offcanvasPreventDropdownAutoCollapse == false && document.querySelector(offcanvasIsActiveSelector) == null) {
+							console.log('tabs outs');
+
+							// Close all dropdowns
+							$dropdowns.forEach(function (dropdown) {
+								dropdown.setAttribute('hidden', '');
+
+								let btn = dropdown.parentNode.querySelector('button');
+
+								btn.setAttribute('aria-expanded', 'false');
+							});
+						}
+					});
+
+					// NOTE: If the user clicks anywhere outside the navigation, close all open $dropdowns.
+
+					window.addEventListener('click', function (event) {
+						let target = event.target;
+
+						if (offcanvasPreventDropdownAutoCollapse == true && document.querySelector(offcanvasIsActiveSelector) != null) {
+							return false;
+						}
+
+						// Close all dropdowns
+						$dropdowns.forEach(function (dropdown) {
+							if (!dropdown.parentNode.contains(target)) {
+								console.log('clicks anywhere');
+
+								dropdown.setAttribute('hidden', '');
+
+								let btn = dropdown.parentNode.querySelector('button');
+
+								btn.setAttribute('aria-expanded', 'false');
+							}
+						});
+					});
+				}
+
+				/**
+				 *  Add hover support devices that are not touch based.
+				 */
+
+				supportHover(_addHover) {
+					let { nav, addHover, hoverDisplayDelay, utils } = this;
+
+					let $nav = document.querySelector(nav);
+
+					var _addHover = _addHover ?? addHover;
+
+					var _hoverDelay = hoverDisplayDelay;
+
+					// NOTE: fn generated by ChatGPT.
+					let convertToMilliseconds = function (timeString) {
+						const [, numericValue, unit] = timeString.match(/^([\d.]+)([a-z]+)$/i) || [];
+
+						let getConversionFactor = (unit) => {
+							switch (unit.toLowerCase()) {
+								case 'ms':
+									return 1;
+								case 's':
+									return 1000;
+								default:
+									console.error(`Unsupported time unit: ${unit}`);
+									return null; // or handle the error in a way that makes sense for your application
+							}
+						};
+
+						if (!numericValue || !unit) {
+							console.error('Invalid time string format');
+
+							return null; // or handle the error in a way that makes sense for your application
+						}
+
+						const milliseconds = parseFloat(numericValue) * getConversionFactor(unit);
+
+						return milliseconds;
+					};
+
+					// Set hover display delay based on the definition of a CSS variable --fndish-dropdown-panel-duration
+
+					if (hoverDisplayDelay == true && utils.getCSSCustomProperty('fndish-dropdown-panel-duration') !== false) {
+						let cssPropValue = utils.getCSSCustomProperty('fndish-dropdown-panel-duration');
+
+						let milliseconds = convertToMilliseconds(cssPropValue) > 0 ? convertToMilliseconds(cssPropValue) : null;
+
+						_hoverDelay = milliseconds ?? _hoverDelay;
+					} else if (hoverDisplayDelay == false) {
+						_hoverDelay = 0;
+					}
+
+					if (addHover && 'ontouchstart' in document.documentElement == false) {
+						let mouseDropdownHandler = function (ev) {
+							let $el = ev.target;
+
+							setTimeout(() => $el.querySelector('.wrapper > button').click(), _hoverDelay);
+						};
+
+						// Add hover only to the top level links
+
+						let $toplevel_listitems = $nav.querySelectorAll(':scope > ul > li.menu-item.menu-item-has-children');
+
+						$toplevel_listitems.forEach(function ($listitem, index) {
+							$listitem.addEventListener('mouseenter', function (event) {
+								mouseDropdownHandler(event);
+							});
+
+							$listitem.addEventListener('mouseleave', function (event) {
+								let $btn = event.target.querySelector('.fndish-js-dropdown-menu__discloser-trigger-wrapper > button[aria-expanded]') ?? false;
+
+								// Prevent the display of the submenu if it is closed using the disclosure toggle.
+								if ($btn.getAttribute('aria-expanded') == 'true') {
+									mouseDropdownHandler(event);
+								}
+							});
+						});
+					}
+				}
+			}
+
+			let navDropdownMenus = new FndishDropDown({
+				nav: '.site-navigation',
+				addHover: true,
+				hoverDisplayDelay: 225,
+				offcanvasIsActiveSelector: '.fndish-offcanvas--is-active',
+				offcanvasPreventDropdownAutoCollapse: true,
+			});
+
+			/**
+			 * Off-Canvas Menu
+			 */
+
+			class FndishOffCanvas {
+				constructor() {
+					const $nav = document.querySelector('.site-navigation');
+					$nav.classList.add('enhanced');
+
+					const $offCanvasContent = document.querySelector('.fndish-offcanvas-content');
+					const $offCanvasToggle = document.querySelector('.fndish-offcanvas-toggle');
+					const $offCanvasClose = document.querySelector('.fndish-offcanvas-close');
+					let _nav_siblings = document.querySelectorAll('header > *:not(.site-navigation)');
+
+					const main = document.getElementById('main');
+					const footer = document.getElementById('main-footer');
+					const header = document.getElementById('main-header');
+
+					let detectDesktopWidth = window.matchMedia('(min-width: 1200px)');
+					let offcanvasIsVisible = true;
+
+					/**
+					 * Close the Off-Canvas menu.
+					 */
+
+					$offCanvasClose.addEventListener('click', function (event) {
+						// Hide the off-canvas menu.
+						closeOffcanvas();
+
+						// Reset focus back to the initial trigger used to open the offcanvas menu.
+						$offCanvasToggle.focus();
+					});
+
+					function closeOffcanvas() {
+						$offCanvasToggle.setAttribute('aria-expanded', 'false');
+
+						offcanvasIsVisible = false;
+
+						setInertOffcanvas();
+
+						removeInertPage();
+
+						// Close/collapse all sub-menu dropdowns when the off-canvas menu is closed.
+						// TODO: look for AccNavDropdownMenu, if defined then use a method of the AccNavDropdownMenu instance.
+						// dropdowns.forEach(function (dropdown) {
+						//     dropdown.setAttribute("hidden", "");
+						//     let btn = dropdown.parentNode.querySelector("button");
+						//     btn.setAttribute("aria-expanded", "false");
+						// });
+					}
+
+					/**
+					 * Open the Off-Canvas menu.
+					 */
+
+					$offCanvasToggle.addEventListener('click', showNavigationContent, false);
+
+					function showNavigationContent(e) {
+						$offCanvasToggle.setAttribute('aria-expanded', 'true');
+						offcanvasIsVisible = true;
+						removeNavInert();
+						setPageInert();
+						closeNavWhenFocusLeaves($offCanvasContent);
+						$offCanvasClose.focus();
+					}
+
+					function removeNavInert() {
+						$offCanvasContent.removeAttribute('inert');
+					}
+
+					function setPageInert() {
+						if (main) {
+							main.setAttribute('inert', '');
+						}
+						if (footer) {
+							footer.setAttribute('inert', '');
+						}
+
+						for (var i = 0; i < _nav_siblings.length; i++) {
+							_nav_siblings[i].setAttribute('inert', 'true');
+						}
+					}
+
+					function removeInertPage() {
+						if (main) {
+							main.removeAttribute('inert');
+						}
+
+						if (footer) {
+							footer.removeAttribute('inert');
+						}
+
+						for (let i = 0; i < _nav_siblings.length; i++) {
+							_nav_siblings[i].removeAttribute('inert');
+						}
+					}
+
+					function setInertOffcanvas() {
+						$offCanvasContent.setAttribute('inert', '');
+					}
+
+					function closeNavWhenFocusLeaves(element) {
+						var firstClass = 'js-first-focus';
+
+						var lastClass = 'js-last-focus';
+
+						var tabFocusElements = 'button:not([hidden]):not([disabled]), [href]:not([hidden]), input:not([hidden]):not([type="hidden"]):not([disabled]), select:not([hidden]):not([disabled]), textarea:not([hidden]):not([disabled]), [tabindex="0"]:not([hidden]):not([disabled]), summary:not([hidden]), [contenteditable]:not([hidden]), audio[controls]:not([hidden]), video[controls]:not([hidden])';
+
+						var focusable = element.querySelectorAll(tabFocusElements);
+
+						// NOTE: The first focusable element is the toggle button,
+						// but with the nav open, we don't want that one to be focused.
+
+						$offCanvasClose.classList.add(firstClass);
+
+						focusable[focusable.length - 1].classList.add(lastClass);
+
+						element.addEventListener('keydown', function (e) {
+							var keyCode = e.keyCode || e.which;
+							var escKey = 27;
+							var tabKey = 9;
+
+							if (offcanvasIsVisible) {
+								switch (keyCode) {
+									case escKey:
+										closeOffcanvas();
+
+										$offCanvasToggle.focus();
+
+										break;
+
+									default:
+										break;
+								}
+
+								if (offcanvasIsVisible) {
+									var firstFocus = element.querySelector('.' + firstClass);
+									var lastFocus = element.querySelector('.' + lastClass);
+								}
+
+								if (document.activeElement.classList.contains(lastClass)) {
+									if (keyCode === tabKey && !e.shiftKey) {
+										e.preventDefault();
+
+										// Do not trap focus and close the off-canvas menu.
+										closeOffcanvas();
+
+										// Trap focus
+										// firstFocus.focus();
+									}
+								}
+
+								if (document.activeElement.classList.contains(firstClass)) {
+									if (keyCode === tabKey && e.shiftKey) {
+										e.preventDefault();
+
+										// Do not trap focus.
+										closeOffcanvas();
+
+										// Trap focus
+										// lastFocus.focus();
+									}
+								}
+							}
+						});
+					}
+
+					function handleWindowWidthResize(ev) {
+						let onActiveOffcanvasEvent = new CustomEvent('onActiveOffcanvas', {
+							bubbles: true,
+							cancelable: true,
+						});
+
+						let onDisabledOffcanvasEvent = new CustomEvent('onDisabledOffcanvas', {
+							bubbles: true,
+							cancelable: true,
+						});
+
+						// is "desktop"
+						if (ev.matches) {
+							$nav.classList.remove('fndish-offcanvas--is-active');
+							$nav.classList.add('fndish-offcanvas--is-resting');
+							$nav.dispatchEvent(onDisabledOffcanvasEvent);
+
+							$offCanvasContent.removeAttribute('hidden');
+							$offCanvasToggle.setAttribute('hidden', '');
+							$offCanvasClose.setAttribute('hidden', '');
+
+							console.log($offCanvasToggle.getAttribute('aria-expanded'));
+
+							if ($offCanvasToggle.getAttribute('aria-expanded') == 'true') {
+								$offCanvasToggle.setAttribute('aria-expanded', 'false');
+							}
+
+							$offCanvasContent.removeAttribute('role');
+							$offCanvasContent.removeAttribute('aria-labelledby');
+
+							$offCanvasClose.setAttribute('hidden', '');
+							removeNavInert();
+							removeInertPage();
+
+							// Check previous statements that are redundant when using the fn closeOffcanvas.
+						} else {
+							$nav.classList.add('fndish-offcanvas--is-active');
+							$nav.classList.remove('fndish-offcanvas--is-resting');
+							$nav.dispatchEvent(onActiveOffcanvasEvent);
+
+							$offCanvasToggle.removeAttribute('hidden');
+							$offCanvasClose.removeAttribute('hidden');
+							$offCanvasContent.setAttribute('role', 'group');
+							$offCanvasContent.setAttribute('aria-labelledby', 'nav-toggle');
+
+							if (offcanvasIsVisible) {
+							} else {
+								setInertOffcanvas();
+								removeNavInert();
+							}
+
+							//$offCanvasToggle.addEventListener("click", showNavigationContent, false);
+						}
+					}
+
+					/**
+					 * Detect Desktop Width
+					 */
+
+					detectDesktopWidth.addEventListener('change', (e) => {
+						handleWindowWidthResize(e);
+					});
+
+					handleWindowWidthResize(detectDesktopWidth);
+				}
+			}
+
+			new FndishOffCanvas();
+
+			// Close dropdowns when the OffCanvas is disabled
+			document.addEventListener('onDisabledOffcanvas', function (event) {
+				// Close all dropdowns
+				let $dropdowns = document.querySelectorAll('.site-navigation li.menu-item.menu-item-has-children > ul');
+
+				$dropdowns.forEach(function (dropdown) {
+					dropdown.setAttribute('hidden', '');
+
+					let btn = dropdown.parentNode.querySelector('button');
+
+					btn.setAttribute('aria-expanded', 'false');
+				});
+			});
+		</script>
+	</body>
+</html>

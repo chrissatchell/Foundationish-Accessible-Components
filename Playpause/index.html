@@ -1,0 +1,154 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Play/Pause - Foundation(ish) Accessible Components</title>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css" />
+		<!-- <link rel="stylesheet" href="./style.css" /> -->
+		<style></style>
+	</head>
+	<body>
+		<main>
+			<div style="position: relative; display: inline-block">
+				<fndish-playpause target="#video"></fndish-playpause>
+
+				<video id="video" autoplay muted preload="auto" src="https://marfabdev.wpenginepowered.com/wp-content/uploads/2024/04/Joren_Falls_Izu_Jap.mp4"></video>
+			</div>
+		</main>
+		<script>
+			// DOM has loaded.
+			document.addEventListener('DOMContentLoaded', function () {
+				class FndishPlayPauseButton extends HTMLElement {
+					constructor() {
+						super();
+
+						this.button = document.createElement('button');
+						this.button.classList.add('cs-playpause__button');
+						this.button.setAttribute('aria-label', 'Pause');
+						this.button.setAttribute('aria-pressed', 'false');
+						this.targetVideo = '';
+					}
+
+					connectedCallback() {
+						const targetSelector = this.getAttribute('target');
+
+						this.targetVideo = document.querySelector(targetSelector);
+						const targetVideo = this.targetVideo;
+
+						const tagetVideoID = targetVideo.id ?? false;
+
+						if (tagetVideoID !== false) {
+							targetSelector.replace(/\./g, '');
+							targetSelector.replace(/#/g, '');
+							this.button.setAttribute('aria-controls', `${targetSelector}`);
+						}
+
+						if (targetVideo) {
+							this.loadStyles();
+
+							// Append the button to this component itself
+							this.appendChild(this.button);
+
+							this.button.addEventListener('click', (ev) => {
+								ev.preventDefault();
+								this.playPauseHandler();
+							});
+
+							// detect reduced motion os settings
+							const isReduced = window.matchMedia(`(prefers-reduced-motion: reduce)`) === true || window.matchMedia(`(prefers-reduced-motion: reduce)`).matches === true;
+
+							if (isReduced) {
+								this.playPauseHandler();
+							}
+
+							// video onended event
+							targetVideo.onended = (event) => {
+								this.playPauseHandler();
+								this.button.classList.add('replay');
+							};
+						} else {
+							console.error('The target video element with an ID does not exist');
+						}
+					}
+
+					playPauseHandler() {
+						let { button, targetVideo } = this;
+						button.classList.remove('replay');
+						if (button.classList.contains('is-paused')) {
+							button.classList.remove('is-paused');
+							button.setAttribute('aria-pressed', 'false');
+							targetVideo.play();
+						} else {
+							button.classList.add('is-paused');
+							button.setAttribute('aria-pressed', 'true');
+							targetVideo.pause();
+						}
+					}
+
+					loadStyles() {
+						let styles = document.createElement('style');
+						styles.textContent = `
+                cs-playpause > button,
+                button.cs-playpause__button {
+                    --color: white;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: calc(42/16*1rem);
+                    height: calc(42/16*1rem);
+                    border-radius: 9999px;
+                    position: absolute;
+                    bottom: 1.2rem;
+                    right: 0.75rem;
+                    z-index: 4;
+                    cursor: pointer;
+                    background-color: #00000080;
+                    border: 2px solid #FFFFFF70;
+
+                    &:hover {
+                        box-shadow: 0 0 0 1px white;
+                        border-color: white !important;
+                    }
+
+                    &:focus-visible {
+                        box-shadow: 0 0 0 3px white, 0 0 0 6px #4285F4;
+                        border-color: white !important;
+                    }
+
+                    &::after {
+                        content: '';
+                        width: 100%;
+                        height: 100%;
+                        display: inline-block;
+                        position: relative;
+                        background: center center scroll no-repeat;
+                        background-size: 14px;
+                        pointer-events: none;
+                        transform: translate(0, 0);
+                        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' height='1em' viewBox='0 0 320 512'%3E%3C!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --%3E%3Cpath fill='white' d='M48 64C21.5 64 0 85.5 0 112V400c0 26.5 21.5 48 48 48H80c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H48zm192 0c-26.5 0-48 21.5-48 48V400c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H240z'/%3E%3C/svg%3E");
+                    }
+
+                    &[aria-pressed="true"]::after {
+                        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' height='1em' viewBox='0 0 384 512'%3E%3C!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --%3E%3Cpath fill='white' d='M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z'/%3E%3C/svg%3E");
+                        transform: translate(1px, 0);
+                    }
+
+                    &.replay[class]::after {
+                        transform: scale(1.3);
+                        //         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' fill='white'%3E%3Cpath d='M386.3 160H336c-17.7 0-32 14.3-32 32s14.3 32 32 32H464c17.7 0 32-14.3 32-32V64c0-17.7-14.3-32-32-32s-32 14.3-32 32v51.2L414.4 97.6c-87.5-87.5-229.3-87.5-316.8 0s-87.5 229.3 0 316.8s229.3 87.5 316.8 0c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0c-62.5 62.5-163.8 62.5-226.3 0s-62.5-163.8 0-226.3s163.8-62.5 226.3 0L386.3 160z'/%3E%3C/svg%3E");
+                        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' fill='white' %3E%3Cpath d='M472 224c13.3 0 24-10.7 24-24V56c0-13.3-10.7-24-24-24s-24 10.7-24 24v80.1l-20-23.5C387 63.4 325.1 32 256 32C132.3 32 32 132.3 32 256s100.3 224 224 224c50.4 0 97-16.7 134.4-44.8c10.6-8 12.7-23 4.8-33.6s-23-12.7-33.6-4.8C332.2 418.9 295.7 432 256 432c-97.2 0-176-78.8-176-176s78.8-176 176-176c54.3 0 102.9 24.6 135.2 63.4l.1 .2 0 0L418.9 176H328c-13.3 0-24 10.7-24 24s10.7 24 24 24H472z'/%3E%3C/svg%3E");
+                    }
+                }
+            `;
+						// document.head.appendChild(styles);
+
+						this.before(styles);
+					}
+				}
+
+				customElements.define('fndish-playpause', FndishPlayPauseButton);
+			});
+		</script>
+	</body>
+</html>
