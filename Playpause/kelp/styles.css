@@ -1,0 +1,366 @@
+/**
+ * @section <kelp-media-playback>
+ */
+
+@layer kelp.core {
+
+    kelp-media-playback {
+        --icon-loading: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'%3E%3Cpath fill='white' d='M512.056 908.647c-84.516 0-166.416-27.084-235.266-78.637-84.15-63.028-138.741-155.109-153.675-259.2-14.934-104.119 11.559-207.816 74.588-291.994 130.162-173.812 377.438-209.25 551.194-79.172 72.844 54.562 124.819 133.228 146.391 221.484 3.684 15.103-5.569 30.319-20.644 34.003-15.075 3.572-30.319-5.541-34.003-20.644-18.45-75.628-63-143.044-125.466-189.816-148.866-111.516-360.844-81.112-472.444 67.866-54.028 72.141-76.725 161.016-63.9 250.256 12.797 89.241 59.597 168.131 131.737 222.131 149.006 111.656 360.956 81.197 472.5-67.781 29.194-39.009 49.219-82.716 59.456-129.938 3.319-15.188 18.366-24.834 33.441-21.544 15.188 3.291 24.834 18.281 21.544 33.441-12.009 55.181-35.353 106.2-69.413 151.762-63.028 84.15-155.109 138.769-259.256 153.675-18.984 2.756-37.941 4.106-56.784 4.106z'/%3E%3C/svg%3E");
+        --icon-play: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' height='1em' viewBox='0 0 384 512'%3E%3Cpath fill='white' d='M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z'/%3E%3C/svg%3E");;
+        --icon-pause: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' height='1em' viewBox='0 0 320 512'%3E%3Cpath fill='white' d='M48 64C21.5 64 0 85.5 0 112V400c0 26.5 21.5 48 48 48H80c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H48zm192 0c-26.5 0-48 21.5-48 48V400c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H240z'/%3E%3C/svg%3E");
+        --icon-replay: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g><path fill="white" d="M12,20.75A7.26,7.26,0,0,1,4.75,13.5a.75.75,0,0,1,1.5,0A5.75,5.75,0,1,0,12,7.75H9.5a.75.75,0,0,1,0-1.5H12a7.25,7.25,0,0,1,0,14.5Z"/><path fill="white" d="M12,10.75a.74.74,0,0,1-.53-.22l-3-3a.75.75,0,0,1,0-1.06l3-3a.75.75,0,1,1,1.06,1.06L10.06,7l2.47,2.47a.75.75,0,0,1,0,1.06A.74.74,0,0,1,12,10.75Z"/></g></svg>');
+
+        --icon-size: calc(14/16*1rem);
+        --icon-replay-size: calc(24/16*1rem);
+        --icon-loading-size: calc(24/16*1rem);
+
+        --icon-display-timing: 0.2s;
+        --icon-display-delay: 0s;
+
+        --button-size: calc(42/16*1rem);
+        --button-color: white;
+        --button-bg: #00000090;
+        --button-border: 2px solid #FFFFFF70;
+        --button-hover-border: white;
+        --button-focus-shadow: #4285F4;
+        --button-filter: blur(4px);
+
+        /* Reveal */
+        --button-display-timing: 0.25s;
+        --button-display-delay: 0.1s;
+        --button-display-transform-start: scale(0.94);
+        --button-display-transform-end: scale(1);
+
+        display: block;
+
+        & > button {
+            position: absolute;
+            bottom: 0.85rem;
+            right: 0.75rem;
+        }
+
+        & button {
+            anchor-name: --playback-anchor;
+
+            width: var(--button-size);
+            height: var(--button-size);
+            border: var(--button-border);
+            background-color: var(--button-bg);
+            backdrop-filter: var(--button-filter);
+            color: var(--button-color);
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            padding: 0;
+
+            border-radius: 9999px;
+            cursor: pointer;
+
+            z-index: 2;
+
+            font-size: 0; /* NOTE: hide user provided text */
+
+            &::after {
+                content: '';
+                width: 100%;
+                height: 100%;
+                display: inline-block;
+                position: relative;
+                background: center center scroll no-repeat;
+                background-size: var(--icon-size);
+                color: var(--button-color);
+                transform: translate(0, 0);
+                pointer-events: none;
+
+                opacity: 0;
+                transition: opacity var(--icon-display-timing) var(--icon-display-delay);
+            }
+        }
+
+        &[media-has-controls] button {
+            bottom: auto;
+            top: 1rem;
+        }
+
+        & :is(video, audio) {
+            display: block; /* remove the baseline gap */
+            margin-block-end: 0;
+        }
+
+    }
+
+}
+
+@layer kelp.state {
+
+    /* Defaults */
+
+	kelp-media-playback {
+
+        & button {
+
+            &:hover {
+                box-shadow: 0 0 0 1px var(--button-hover-border, white);
+                border-color: var(--button-hover-border) !important;
+            }
+
+            &:focus-visible {
+                box-shadow: 0 0 0 3px white, 0 0 0 6px #4285F4;
+                border-color: white !important;
+            }
+        }
+
+        /* Loading */
+        &[loading-delay]:not([media-is-ready]) button {
+            pointer-events: none;
+            opacity: 0.8;
+
+            &::after {
+                background-image: var(--icon-loading);
+                background-size: var(--icon-loading-size);
+                animation: mediaLoadingSpin 1s linear infinite;
+                will-change: transform;      /* nudge GPU compositing */
+
+                opacity: 1;
+                transition: unset;
+            }
+
+            /* Has loading icon set as a child of button */
+            &:has(
+                .kelp-media-is-loading,
+                .is-loading,
+                .loading
+            )::after {
+                /* background-image: none; */
+                /* display: none; */
+            }
+        }
+
+        /* Media ready */
+        &[media-is-ready] button {
+
+            /* Video is playing and the pause button is not pressed (show the pause icon). */
+            &[aria-pressed="false"]::after {
+                background-image: var(--icon-pause);
+                opacity: 1;
+            }
+
+            /* Video is paused and the pause button is pressed (show the play icon). */
+            &[aria-pressed="true"]::after {
+                background-image: var(--icon-play);
+                transform: translate(1px, 0);
+                opacity: 1;
+            }
+
+            /* Video has played to the end and is ready to be replayed (show the replay icon). */
+            &.replay::after {
+                --icon-replay-bgsize: var(--icon-replay-size, var(--icon-size));
+                background-size: var(--icon-replay-bgsize);
+                background-image: var(--icon-replay);
+            }
+
+        }
+
+    }
+
+
+    /* Reveal defaults */
+
+    kelp-media-playback[reveal] {
+        & button {
+            display: none;
+            opacity: 0;
+            transform: var(--button-display-transform-start);
+
+            /* NOTE: Using 'all' is an issue */
+            transition:
+                opacity var(--js-button-display-timing, var(--button-display-timing)) var(--js-button-display-delay, var(--button-display-delay)) ease-in-out,
+                transform var(--js-button-display-timing, var(--button-display-timing)) var(--js-button-display-delay, var(--button-display-delay)) ease-in-out;
+        }
+
+        &[media-is-ready] button {
+            display: block;
+            opacity: 1;
+            transform: var(--button-display-transform-end);
+
+            @starting-style {
+                opacity: 0;
+                transform: var(--button-display-transform-start);
+            }
+        }
+    }
+
+
+    /* Custom user icons */
+
+    kelp-media-playback {
+
+        /* Button has children */
+        & button:has(*) {
+            text-align: center;
+
+            :where(*) { font-size: var(--icon-font-size, 1rem); }
+
+            &:has(.play) .play,
+            &:has(.pause) .pause,
+            &:has(.replay) .replay {
+                display: none;
+                opacity: 0;
+
+                &:has(svg:not([hidden])) {
+                    width: var(--custom-icon-size, var(--icon-loading-size, 1rem));
+                    height: var(--custom-icon-size, var(--icon-loading-size, 1rem));
+                }
+
+                svg {
+                    fill: currentColor;
+                }
+            }
+
+            &::after,
+            &.replay::after {
+                transition: none;
+            }
+
+        }
+
+
+        /*
+            Loading
+            TODO: --loading-icon-size, --loading-icon-color
+        */
+
+        & button .loading {
+            position: relative;
+
+            width: var(--custom-icon-size, var(--icon-loading-size, 1rem));
+            height: var(--custom-icon-size, var(--icon-loading-size, 1rem));
+
+            display: inline-flex;
+            vertical-align: middle;
+            overflow: hidden;
+
+            fill: currentColor;
+            transform-box: fill-box; /* make transform-origin work as expected in SVG */
+            animation: mediaLoadingSpin 1s linear infinite;
+            will-change: transform;      /* nudge GPU compositing */
+
+            /* Supports translate as a separate property */
+            @supports (translate: 10px 10px) {
+                & {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    translate: -50% -50%;
+                }
+            }
+
+
+            @media (prefers-reduced-motion: reduce) {
+                & {
+                    animation: mediaLoadingSpin 2.5s linear infinite;
+                }
+            }
+        }
+
+        &:not([media-is-ready]) button:has(.loading)::after {
+            position: absolute;
+            height: 1px;
+            width: 1px;
+            opacity: 0;
+        }
+
+        &:not([media-is-ready]) .loading[class] {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 1;
+        }
+
+        /* Hide loading when the media is ready */
+        &[media-is-ready] .loading[class] {
+            opacity: 0;
+            display: none;
+            animation: none;
+        }
+
+
+        /*
+            Play, pause, replay
+        */
+        &[media-is-ready] {
+
+            /* Play */
+            & button:not(.replay)[aria-pressed="true"]:has(.play) {
+                &:after {
+                    position: absolute;
+                    height: 1px;
+                    width: 1px;
+                    opacity: 0;
+                }
+
+                &[class] > .play[class] {
+                    opacity: 1;
+                    display: inline-flex;
+                    justify-content: center;
+                }
+
+                & .pause[class] {
+                    display: none;
+                    opacity: 0;
+                }
+            }
+
+            /* Pause */
+            & button[aria-pressed="false"]:has(.pause)  {
+                &:after {
+                    position: absolute;
+                    height: 1px;
+                    width: 1px;
+                    opacity: 0;
+                }
+
+                & .pause[class] {
+                    opacity: 1;
+                    display: inline-flex;
+                    justify-content: center;
+                }
+
+                &[class] > .play[class] {
+                    opacity: 0;
+                    display: none;
+                }
+            }
+
+            /* Replay */
+            & button.replay[aria-pressed]:has(.replay) {
+                :is(.play, .pause) {
+                    display: none !important;
+                    opacity: 0 !important;
+                }
+                &:after {
+                    position: absolute;
+                    height: 1px;
+                    width: 1px;
+                    opacity: 0;
+                }
+                & .replay {
+                    opacity: 1;
+                    display: inline-flex;
+                    justify-content: center;
+                }
+            }
+
+        }
+
+    }
+
+
+    @keyframes mediaLoadingSpin {
+        from { transform: rotate(0deg) }
+        to { transform: rotate(360deg) }
+    }
+
+}
