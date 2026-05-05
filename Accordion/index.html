@@ -9,6 +9,7 @@
         <style data-demo>
             body {
                 padding: 2rem;
+                font-family: sans-serif;
             }
 
             h1 {
@@ -26,21 +27,17 @@
         <h1>Accordion</h1>
 
         <accordion-item>
-            <details name="disclosure">
-                <summary>1. Lorem ipsum dolor sit.</summary>
-                <div>
-                    <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos, qui repudiandae non facilis cum quidem beatae atque nam quae quam eaque itaque sit amet aperiam officia delectus magni ipsa. Rerum!</p>
-                </div>
-            </details>
+            <button aria-expanded="false">1. Lorem ipsum dolor sit.</button>
+            <div hidden>
+                <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos, qui repudiandae non facilis cum quidem beatae atque nam quae quam eaque itaque sit amet aperiam officia delectus magni ipsa. Rerum!</p>
+            </div>
         </accordion-item>
 
         <accordion-item>
-            <details name="disclosure">
-                <summary>2. Lorem ipsum dolor sit.</summary>
-                <div>
-                    <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos, qui repudiandae non facilis cum quidem beatae atque nam quae quam eaque itaque sit amet aperiam officia delectus magni ipsa. Rerum!</p>
-                </div>
-            </details>
+            <button aria-expanded="false">2. Lorem ipsum dolor sit.</button>
+            <div hidden>
+                <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos, qui repudiandae non facilis cum quidem beatae atque nam quae quam eaque itaque sit amet aperiam officia delectus magni ipsa. Rerum!</p>
+            </div>
         </accordion-item>
 
         <accordion-item>

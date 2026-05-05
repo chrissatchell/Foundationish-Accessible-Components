@@ -13,15 +13,15 @@ class FoundationishAccordion extends HTMLElement {
         opened: "is-opened"
     };
 
+    panelID = false;
+
     /**
-     * Done! I've updated the method to cache the result:
-
-Added a static property detailsNameSupport to store the cached result across all instances
-Modified supportsDetailsName() to check if the test has already run — if so, it returns the cached value immediately
-Only on the first call does it perform the actual detection test
-Now when you have 3 instances of the accordion element, the feature detection only runs once, and subsequent instances reuse the cached result.
-
-
+     * NOTE:
+     *  Added a static property detailsNameSupport to store the cached result across all instances
+     *  Modified supportsDetailsName() to check if the test has already run — if so, it returns the cached value immediately
+     *  Only on the first call does it perform the actual detection test
+     *  Now when you have 3 instances of the accordion element, the feature detection only runs once, and subsequent instances reuse the
+     *  cached result.
      */
 
     // Cache for details name attribute support (runs once across all instances)
@@ -44,8 +44,8 @@ Now when you have 3 instances of the accordion element, the feature detection on
 
     // This method is called whenever an observed attribute changes. It receives the name of the changed attribute, its old value, and its new value.
     // Fires whenever an observed attribute changes. It receives the name of the changed attribute, its old value, and its new value.
-    attributeChangedCallback(name, oldValue, newValue) {
-        if (name === 'is-opened') {
+    attributeChangedCallback(attrName, oldValue, newValue) {
+        if (attrName === 'is-opened') {
             // openAttrChangeHandler(oldValue, newValue);
         }
     }
@@ -124,13 +124,12 @@ Now when you have 3 instances of the accordion element, the feature detection on
 
         this.setOpenedAttribute();
 
-        this.onToggleEvent();
-
         this.supportsDetailsName();
 
         // Return something to detect inside init()
         return true;
     }
+
 
     /**
      *  4. Render
@@ -138,8 +137,126 @@ Now when you have 3 instances of the accordion element, the feature detection on
 
     render() {
 
+        let {log}=console;
+
+        // Detect 'details' element
+        if ( this.detectHTMLDetails() ) {
+            this.setAttribute("provided-details",'');
+        }
+
+        // Detect provided custom markup for a disclosure pattern
+        // using a button and a div
+        if (
+            this.detectCustomHTML()
+            && !this.detectHTMLDetails()
+        ) {
+            this.setAttribute("provided-markup",'');
+            this.renderChildHtmlDisclosure();
+        }
+
+        // Event listeners for details toggle and custom disclosure click
+        this.onToggleEvent();
+
         // Return something to detect inside init()
         return true;
+    }
+
+    /*
+        4.1 Render Helpers
+    */
+
+    renderCustomDisclosure() {
+        // If the details element is not found, render a custom disclosure pattern using a button and a div
+        const button = document.createElement("button");
+        button.setAttribute("aria-expanded", "false");
+        button.setAttribute("aria-controls", "disclosure-panel");
+        button.textContent = "Toggle Accordion";
+
+        const panel = document.createElement("div");
+        panel.id = "disclosure-panel";
+        panel.hidden = true;
+        panel.innerHTML = "<p>This is the content of the accordion item.</p>";
+
+        this.append(button, panel);
+    }
+
+    renderChildHtmlDisclosure() {
+
+        // Generate a unique ID for the panel if it doesn't already have one
+        let generateUniqueID = () => {
+            //return "disclosure-panel-" + Math.random().toString(36).substr(2, 9);
+            let id = Math.floor(Math.random() * 100000);
+
+            // Make sure it's not already in use
+            let suffix = 0;
+            let existing = document.querySelector(`#fndish-panel-${id}`);
+            while (existing) {
+                suffix++;
+                existing = document.querySelector(
+                    `#fndish-panel-${id}_${suffix}`,
+                );
+            }
+
+            // Set the ID on the element
+            return `fndish-panel-${id}${suffix ? `_${suffix}` : ""}`;
+        }
+
+        // wrap the existing child HTML in a custom disclosure pattern using a button and a div
+        let setWrapperForDisclosure = () => {
+            let wrapper = document.createElement("div");
+            wrapper.classList.add("disclosure");
+
+            while (this.firstChild) {
+                wrapper.appendChild(this.firstChild);
+            }
+
+            this.appendChild(wrapper);
+        };
+
+        // Set the necessary ARIA attributes on the button and panel for accessibility
+        let setAttsForDisclosure = () => {
+            let trigger = this.querySelector(".disclosure > button"),
+                panel = this.querySelector(".disclosure > div");
+
+            if (!panel.id) {
+                this.panelID = generateUniqueID();
+                panel.id = this.panelID;
+            }
+
+            if (
+                !trigger.hasAttribute("aria-controls")
+                || trigger.getAttribute("aria-controls") !== `#${panel.id}`
+            ) {
+                trigger.setAttribute("aria-controls", panel.id);
+            }
+
+            if (!trigger.hasAttribute("aria-expanded")) {
+                trigger.setAttribute("aria-expanded", "false");
+            }
+        }
+
+        // Add click event listener to the button to toggle the visibility of the panel and update ARIA attributes accordingly
+        let addWiringForDisclosure = () => {
+            let trigger = this.querySelector(".disclosure > button"),
+            panel = this.querySelector(".disclosure > div");
+
+            trigger.addEventListener("click", function() {
+                if ( this.getAttribute("aria-expanded") === "true" ) {
+                    this.setAttribute("aria-expanded", "false");
+                    panel.setAttribute("hidden", "");
+
+                } else {
+                    this.setAttribute("aria-expanded", "true");
+                    panel.removeAttribute("hidden");
+                }
+            });
+        }
+
+        setWrapperForDisclosure();
+
+        setAttsForDisclosure();
+
+        addWiringForDisclosure();
     }
 
 
@@ -160,38 +277,54 @@ Now when you have 3 instances of the accordion element, the feature detection on
     }
 
     onToggleEvent() {
-        this.details = this.querySelector("details");
+        if ( this.detectHTMLDetails() ) {
+            this.details = this.querySelector("details");
 
-        if (!this.details) return false;
+            this.details.addEventListener("toggle", (event) => {
+                this.openedState = this.getOpenedState();
+                this.setOpenedAttribute();
+            });
+        }
 
-        this.openedState = this.getOpenedState();
-        this.setOpenedAttribute();
-
-        this.details.addEventListener("toggle", (event) => {
-            this.setAttribute("toggle-count", ++this.toggleCount);
-            this.openedState = this.getOpenedState();
-            this.setOpenedAttribute();
-            console.log("Current opened state:", this.openedState);
-        });
+        if ( this.detectCustomHTML() ) {
+            this.detectCustomHTML().trigger.addEventListener("click", (event) => {
+                this.openedState = this.getOpenedState();
+                this.setOpenedAttribute();
+            });
+        }
     }
+
 
     /*
         5. State
     */
 
     getOpenedState() {
-        return this.querySelector("details").hasAttribute("open") ? true : false;
+        let {log} = console;
+        if (this.querySelector("details") !== null) {
+            return this.querySelector("details").hasAttribute("open") ? true : false;
+        } else if (this.querySelector(".disclosure > button") !== null) {
+            // Handle custom disclosure logic
+            return this.querySelector(".disclosure > button").getAttribute("aria-expanded") === "true" ? true : false;
+        } else {
+            return false;
+        }
     }
+
+
+    /*
+        Attributes
+    */
 
     setOpenedAttribute() {
         const isOpen = this.getOpenedState();
-        const isOpenAttr = this.getAttribute("is-opened");
         if (isOpen) {
-            this.setAttribute("is-opened", `${this.toggleCount/2}`);
+            this.setAttribute("is-opened", "");
         } else {
             this.removeAttribute("is-opened");
         }
     }
+
 
     /*
         6. Feature Detection
@@ -239,6 +372,26 @@ Now when you have 3 instances of the accordion element, the feature detection on
 
         log(`name support for details elements: ${this.constructor.detailsNameSupport}`);
         return this.constructor.detailsNameSupport;
+    }
+
+    /* Detect details element */
+    detectHTMLDetails() {
+        let $details = this.querySelector("details");
+        if ( $details ) {
+            return !!$details;
+        }
+    }
+
+    detectCustomHTML() {
+        let trigger = this.querySelector("button"),
+            panel = this.querySelector("button + div");
+        if ( trigger && panel ) {
+            return {
+                trigger,
+                panel
+            };
+        }
+        return false;
     }
 };
 

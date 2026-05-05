@@ -11,7 +11,8 @@
 
 /* Core */
 @layer accordion.core {
-    details {
+    details,
+    .disclosure {
         border: 1px solid var(--accordion-border-color, #ccc);
         border-radius: 4px;
         padding: 0.5em;
@@ -22,7 +23,35 @@
         font-weight: bold;
     }
 
-    details[open] summary {
+    details[open] summary,
+    .disclosure:has([aria-expanded="true"]) button {
         color: var(--accordion-open-summary-color, #007BFF);
+    }
+
+    button[aria-expanded] {
+        cursor: pointer;
+        appearance: none;
+        background: none;
+        display:block;
+        position: relative;
+        padding-inline-start: 14px;
+        color: light-dark(black, white);
+        font-weight: bold;
+    }
+
+    button::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 50%;
+        width: 0.5em;
+        height: 0.5em;
+        transform: translate(-1px, -50%) rotate(-45deg);
+        border-right: 0.15em solid currentColor;
+        border-bottom: 0.15em solid currentColor;
+    }
+
+    button[aria-expanded="true"]::before {
+        transform: translateY(calc(-50% - 2px)) rotate(45deg);
     }
 }
