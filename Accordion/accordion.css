@@ -1,0 +1,28 @@
+/**
+ * Foundation(ish) Accordion styles.
+ */
+
+/* Layers */
+@layer accordion;
+@layer accordion.reset, accordion.core, accordion.state;
+
+/* Reset */
+@import "./styles/reset.css" layer(accordion.reset);
+
+/* Core */
+@layer accordion.core {
+    details {
+        border: 1px solid var(--accordion-border-color, #ccc);
+        border-radius: 4px;
+        padding: 0.5em;
+    }
+
+    summary {
+        cursor: pointer;
+        font-weight: bold;
+    }
+
+    details[open] summary {
+        color: var(--accordion-open-summary-color, #007BFF);
+    }
+}

@@ -4,6 +4,54 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<title>Accordion - Foundation(ish) Accessible Components</title>
+        <link rel="stylesheet" href="./accordion.css" />
+
+        <style data-demo>
+            body {
+                padding: 2rem;
+            }
+
+            h1 {
+                margin-bottom: 2rem;
+            }
+
+            accordion-item {
+                display: block;
+                margin-bottom: 1rem;
+                width: min(100%, 50rem)
+            }
+        </style>
 	</head>
-	<body></body>
+	<body>
+        <h1>Accordion</h1>
+
+        <accordion-item>
+            <details name="disclosure">
+                <summary>1. Lorem ipsum dolor sit.</summary>
+                <div>
+                    <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos, qui repudiandae non facilis cum quidem beatae atque nam quae quam eaque itaque sit amet aperiam officia delectus magni ipsa. Rerum!</p>
+                </div>
+            </details>
+        </accordion-item>
+
+        <accordion-item>
+            <details name="disclosure">
+                <summary>2. Lorem ipsum dolor sit.</summary>
+                <div>
+                    <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos, qui repudiandae non facilis cum quidem beatae atque nam quae quam eaque itaque sit amet aperiam officia delectus magni ipsa. Rerum!</p>
+                </div>
+            </details>
+        </accordion-item>
+
+        <accordion-item>
+            <details name="disclosure">
+                <summary>3. Lorem ipsum dolor sit.</summary>
+                <div>
+                    <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos, qui repudiandae non facilis cum quidem beatae atque nam quae quam eaque itaque sit amet aperiam officia delectus magni ipsa. Rerum!</p>
+                </div>
+            </details>
+        </accordion-item>
+
+    <script src="./accordion.js"></script>
+    </body>
 </html>
