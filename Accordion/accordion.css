@@ -28,11 +28,16 @@
         color: var(--accordion-open-summary-color, #007BFF);
     }
 
+    .disclosure > button[aria-expanded] {
+        display: block;
+        width: 100%;
+        text-align: left;
+    }
+
     button[aria-expanded] {
         cursor: pointer;
         appearance: none;
         background: none;
-        display:block;
         position: relative;
         padding-inline-start: 14px;
         color: light-dark(black, white);

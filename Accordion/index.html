@@ -19,35 +19,68 @@
             accordion-item {
                 display: block;
                 margin-bottom: 1rem;
-                width: min(100%, 50rem)
+                width: min(100%, 50rem);
+                background-color: #333;
+
+                &:last-child {
+                    margin-bottom: 0;
+                }
+            }
+
+            accordion-items {
+                display: inline-block;
+                width: min(100%, 50rem);
+                padding: 1rem;
+                background-color: #000000;
+                margin-bottom: 2rem;
+
+                &:last-child {
+                    margin-bottom: 0;
+                }
             }
         </style>
 	</head>
 	<body>
         <h1>Accordion</h1>
 
-        <accordion-item>
-            <button aria-expanded="false">1. Lorem ipsum dolor sit.</button>
-            <div hidden>
-                <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos, qui repudiandae non facilis cum quidem beatae atque nam quae quam eaque itaque sit amet aperiam officia delectus magni ipsa. Rerum!</p>
-            </div>
-        </accordion-item>
+        <accordion-items role="region" aria-label="Frequently Asked Questions">
 
-        <accordion-item>
-            <button aria-expanded="false">2. Lorem ipsum dolor sit.</button>
-            <div hidden>
-                <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos, qui repudiandae non facilis cum quidem beatae atque nam quae quam eaque itaque sit amet aperiam officia delectus magni ipsa. Rerum!</p>
-            </div>
-        </accordion-item>
-
-        <accordion-item>
-            <details name="disclosure">
-                <summary>3. Lorem ipsum dolor sit.</summary>
+            <accordion-item>
+                <button aria-expanded="false">1. Lorem ipsum dolor sit.</button>
                 <div>
                     <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos, qui repudiandae non facilis cum quidem beatae atque nam quae quam eaque itaque sit amet aperiam officia delectus magni ipsa. Rerum!</p>
                 </div>
-            </details>
-        </accordion-item>
+            </accordion-item>
+
+            <accordion-item>
+                <button>2. Lorem ipsum dolor sit.</button>
+                <div>
+                    <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos, qui repudiandae non facilis cum quidem beatae atque nam quae quam eaque itaque sit amet aperiam officia delectus magni ipsa. Rerum!</p>
+                    <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos, qui repudiandae non facilis cum quidem beatae atque nam quae quam eaque itaque sit amet aperiam officia delectus magni ipsa. Rerum!</p>
+                </div>
+            </accordion-item>
+
+            <accordion-item>
+                <button>3. Lorem ipsum dolor sit.</button>
+                <div>
+                    <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos, qui repudiandae non facilis cum quidem beatae atque nam quae quam eaque itaque sit amet aperiam officia delectus magni ipsa. Rerum!</p>
+                </div>
+            </accordion-item>
+
+        </accordion-items>
+
+        <accordion-items role="region" aria-label="More Frequently Asked Questions">
+
+            <accordion-item>
+                <details name="disclosure">
+                    <summary>4. Lorem ipsum dolor sit.</summary>
+                    <div>
+                        <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos, qui repudiandae non facilis cum quidem beatae atque nam quae quam eaque itaque sit amet aperiam officia delectus magni ipsa. Rerum!</p>
+                    </div>
+                </details>
+            </accordion-item>
+
+        </accordion-items>
 
     <script src="./accordion.js"></script>
     </body>

@@ -9,11 +9,14 @@ class FoundationishAccordion extends HTMLElement {
     toggleCount = 0;
 
     attr = {
-        ready: "is-ready",
-        opened: "is-opened"
+        ready: "ready",
+        opened: "expanded"
     };
 
     panelID = false;
+
+    // Internal flag used to distinguish event-driven attribute updates from external changes
+    #attributeChangeTriggeredByEvent = false;
 
     /**
      * NOTE:
@@ -28,6 +31,10 @@ class FoundationishAccordion extends HTMLElement {
     static detailsNameSupport = null;
 
 
+    // Cached detect parent accordion-items element for single-select attribute
+    static singleSelectParentAttribute = null;
+
+
     /**
      * Observer attributes
      */
@@ -35,7 +42,9 @@ class FoundationishAccordion extends HTMLElement {
     // Observe the "opened" and "is-open" attributes for changes.
     // The browser now watches for changes to this attribute and calls attributeChangedCallback() when it changes.
     static get observedAttributes() {
-        return ['opened', 'is-opened'];
+
+        // TODO: this.attr to array and loop through it here.
+        return ['expanded', 'is-opened'];
     }
 
     /**
@@ -45,8 +54,32 @@ class FoundationishAccordion extends HTMLElement {
     // This method is called whenever an observed attribute changes. It receives the name of the changed attribute, its old value, and its new value.
     // Fires whenever an observed attribute changes. It receives the name of the changed attribute, its old value, and its new value.
     attributeChangedCallback(attrName, oldValue, newValue) {
-        if (attrName === 'is-opened') {
-            // openAttrChangeHandler(oldValue, newValue);
+        if ( attrName === 'expanded' && this.detectCustomHTML() ) {
+
+            if ( ( oldValue === '' && newValue === null ) && !this.#attributeChangeTriggeredByEvent ) {
+
+                this.clickCustomHTMLDisclosuresHandler(this.querySelector(".disclosure > button"));
+                console.log('This attribute change was caused externally.');
+
+            } else if (!this.#attributeChangeTriggeredByEvent) {
+
+                this.clickCustomHTMLDisclosuresHandler(this.querySelector(".disclosure > button"));
+                console.log('This attribute change was caused externally.');
+
+            }
+
+        } else if ( attrName === 'expanded' && this.detectHTMLDetails() ) {
+
+            // removal of [expanded]
+            if ( ( oldValue === '' && newValue === null ) && !this.#attributeChangeTriggeredByEvent ) {
+                this.querySelector("details").open = !this.getOpenedState();
+            }
+
+            // addition of [expanded]
+            else if (!this.#attributeChangeTriggeredByEvent) {
+                this.querySelector("details").open = !this.getOpenedState();
+            }
+
         }
     }
 
@@ -161,6 +194,7 @@ class FoundationishAccordion extends HTMLElement {
         return true;
     }
 
+
     /*
         4.1 Render Helpers
     */
@@ -205,6 +239,7 @@ class FoundationishAccordion extends HTMLElement {
         let setWrapperForDisclosure = () => {
             let wrapper = document.createElement("div");
             wrapper.classList.add("disclosure");
+            wrapper.setAttribute("role", "group");
 
             while (this.firstChild) {
                 wrapper.appendChild(this.firstChild);
@@ -233,30 +268,19 @@ class FoundationishAccordion extends HTMLElement {
             if (!trigger.hasAttribute("aria-expanded")) {
                 trigger.setAttribute("aria-expanded", "false");
             }
-        }
 
-        // Add click event listener to the button to toggle the visibility of the panel and update ARIA attributes accordingly
-        let addWiringForDisclosure = () => {
-            let trigger = this.querySelector(".disclosure > button"),
-            panel = this.querySelector(".disclosure > div");
-
-            trigger.addEventListener("click", function() {
-                if ( this.getAttribute("aria-expanded") === "true" ) {
-                    this.setAttribute("aria-expanded", "false");
-                    panel.setAttribute("hidden", "");
-
-                } else {
-                    this.setAttribute("aria-expanded", "true");
-                    panel.removeAttribute("hidden");
-                }
-            });
+            if (trigger.getAttribute("aria-expanded") === "false") {
+                panel.setAttribute("hidden", "");
+            } else {
+                panel.removeAttribute("hidden");
+            }
         }
 
         setWrapperForDisclosure();
 
         setAttsForDisclosure();
 
-        addWiringForDisclosure();
+        // addWiringForDisclosure();
     }
 
 
@@ -281,17 +305,79 @@ class FoundationishAccordion extends HTMLElement {
             this.details = this.querySelector("details");
 
             this.details.addEventListener("toggle", (event) => {
-                this.openedState = this.getOpenedState();
-                this.setOpenedAttribute();
+                //this.toggleHTMLDetailsHandler();
+
+                this.#attributeChangeTriggeredByEvent = true;
+                try {
+                    this.openedState = this.getOpenedState();
+                    this.setOpenedAttribute();
+                } finally {
+                    this.#attributeChangeTriggeredByEvent = false;
+                }
             });
         }
 
         if ( this.detectCustomHTML() ) {
+
             this.detectCustomHTML().trigger.addEventListener("click", (event) => {
-                this.openedState = this.getOpenedState();
-                this.setOpenedAttribute();
+
+                this.#attributeChangeTriggeredByEvent = true;
+
+                if (this.hasSingleSelectAttribute()) {
+                    // TODO: allow for closing of a single open item if clicking on its trigger a close/collapse action (currently requires clicking on another item to close)
+                    this._closeAllCustomHTMLDisclosures();
+                }
+
+                try {
+                    // Expand or collapse
+                    this.clickCustomHTMLDisclosuresHandler(event.target);
+
+                    // Get 'opened' state with getOpenedState()
+                    // Update the 'opened' attribute with setOpenedAttribute()
+                    this.setOpenedAttribute();
+                } finally {
+                    this.#attributeChangeTriggeredByEvent = false;
+                }
             });
         }
+    }
+
+    _closeAllCustomHTMLDisclosures() {
+        const disclosures = this.closest('accordion-items')?.querySelectorAll('accordion-item .disclosure > button[aria-expanded="true"]');
+        if (disclosures) {
+            disclosures.forEach(button => {
+                button.setAttribute("aria-expanded", "false");
+                const panel = button.nextElementSibling;
+                if (panel) {
+                    panel.setAttribute("hidden", "");
+                }
+            });
+        }
+    }
+
+
+    /*
+        Handlers
+    */
+
+    // Add click event listener to the button to toggle the visibility of the panel and update ARIA attributes accordingly
+    clickCustomHTMLDisclosuresHandler(target = event.target) {
+        console.log(target);
+
+        let trigger = target;
+        let panel = trigger.nextElementSibling;
+        if ( trigger.getAttribute("aria-expanded") === "true" ) {
+            trigger.setAttribute("aria-expanded", "false");
+            panel.setAttribute("hidden", "");
+
+        } else {
+            trigger.setAttribute("aria-expanded", "true");
+            panel.removeAttribute("hidden");
+        }
+    }
+
+    toggleHTMLDetailsHandler() {
+
     }
 
 
@@ -319,15 +405,14 @@ class FoundationishAccordion extends HTMLElement {
     setOpenedAttribute() {
         const isOpen = this.getOpenedState();
         if (isOpen) {
-            this.setAttribute("is-opened", "");
+            this.setAttribute(`${this.attr.opened}`, "");
         } else {
-            this.removeAttribute("is-opened");
+            this.removeAttribute(`${this.attr.opened}`);
         }
     }
 
-
     /*
-        6. Feature Detection
+        6. Detection
     */
 
     /**
@@ -339,6 +424,7 @@ class FoundationishAccordion extends HTMLElement {
     supportsDetailsName() {
         let {log} = console;
 
+        // Run once and cache the result in a static property on the class
         // Return cached result if already tested
         if (this.constructor.detailsNameSupport !== null) {
             log(`name support for details elements (cached): ${this.constructor.detailsNameSupport}`);
@@ -392,6 +478,18 @@ class FoundationishAccordion extends HTMLElement {
             };
         }
         return false;
+    }
+
+    /* NOTE: for <accordion-items /> */
+    hasSingleSelectAttribute() {
+        if (
+            this.constructor.singleSelectParentAttribute === null
+            && this.closest('accordion-items')?.hasAttribute('single-select')
+        ) {
+            this.constructor.singleSelectParentAttribute = true;
+        }
+
+        return this.constructor.singleSelectParentAttribute;
     }
 };
 
