@@ -169,8 +169,7 @@ class FoundationishAccordion extends HTMLElement {
      */
 
     render() {
-
-        let {log}=console;
+        let { log } = console;
 
         // Detect 'details' element
         if ( this.detectHTMLDetails() ) {
@@ -184,7 +183,7 @@ class FoundationishAccordion extends HTMLElement {
             && !this.detectHTMLDetails()
         ) {
             this.setAttribute("provided-markup",'');
-            this.renderChildHtmlDisclosure();
+            this.renderCustomHTMLDisclosure();
         }
 
         // Event listeners for details toggle and custom disclosure click
@@ -199,22 +198,7 @@ class FoundationishAccordion extends HTMLElement {
         4.1 Render Helpers
     */
 
-    renderCustomDisclosure() {
-        // If the details element is not found, render a custom disclosure pattern using a button and a div
-        const button = document.createElement("button");
-        button.setAttribute("aria-expanded", "false");
-        button.setAttribute("aria-controls", "disclosure-panel");
-        button.textContent = "Toggle Accordion";
-
-        const panel = document.createElement("div");
-        panel.id = "disclosure-panel";
-        panel.hidden = true;
-        panel.innerHTML = "<p>This is the content of the accordion item.</p>";
-
-        this.append(button, panel);
-    }
-
-    renderChildHtmlDisclosure() {
+    renderCustomHTMLDisclosure() {
 
         // Generate a unique ID for the panel if it doesn't already have one
         let generateUniqueID = () => {
@@ -301,6 +285,11 @@ class FoundationishAccordion extends HTMLElement {
     }
 
     onToggleEvent() {
+
+        let { log } = console;
+
+        /* A <details> element is provided */
+
         if ( this.detectHTMLDetails() ) {
             this.details = this.querySelector("details");
 
@@ -309,13 +298,22 @@ class FoundationishAccordion extends HTMLElement {
 
                 this.#attributeChangeTriggeredByEvent = true;
                 try {
+
                     this.openedState = this.getOpenedState();
+
+                    // NOTE: Component attribute change occurs and calls attributeChangedCallback(),
+                    //       so we can check the flag to avoid treating this as an external change...
                     this.setOpenedAttribute();
+
                 } finally {
+                    // NOTE: The flag is reset after the attribute update,
+                    // so that any subsequent attribute changes that are not triggered by this event will be treated as external changes.
                     this.#attributeChangeTriggeredByEvent = false;
                 }
             });
         }
+
+        /* Custom HTML is provided */
 
         if ( this.detectCustomHTML() ) {
 
@@ -324,8 +322,14 @@ class FoundationishAccordion extends HTMLElement {
                 this.#attributeChangeTriggeredByEvent = true;
 
                 if (this.hasSingleSelectAttribute()) {
-                    // TODO: allow for closing of a single open item if clicking on its trigger a close/collapse action (currently requires clicking on another item to close)
+
                     this._closeAllCustomHTMLDisclosures();
+
+                    // TODO: allow for closing of a single open item if clicking on its trigger a close/collapse action (currently requires clicking on another item to close)
+
+                    if (this.hasAttribute(this.attr.opened) && event.target.getAttribute("aria-expanded") === "true") {
+                        this.removeAttribute(this.attr.opened);
+                    }
                 }
 
                 try {
@@ -377,7 +381,7 @@ class FoundationishAccordion extends HTMLElement {
     }
 
     toggleHTMLDetailsHandler() {
-
+        /* Native HTML element */
     }
 
 

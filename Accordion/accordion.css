@@ -4,23 +4,25 @@
 
 /* Layers */
 @layer accordion;
-@layer accordion.reset, accordion.core, accordion.state;
+@layer accordion.reset, accordion.tokens, accordion.core, accordion.state;
 
 /* Reset */
 @import "./styles/reset.css" layer(accordion.reset);
+
 
 /* Core */
 @layer accordion.core {
     details,
     .disclosure {
-        border: 1px solid var(--accordion-border-color, #ccc);
+        border: var(--fndish-disclosure-border, 1px solid #ccc);
         border-radius: 4px;
-        padding: 0.5em;
     }
 
-    summary {
+    summary,
+    .disclosure > button[aria-expanded] {
         cursor: pointer;
         font-weight: bold;
+        padding: var(--fndish-disclosure-padding, 0.5rem);
     }
 
     details[open] summary,
@@ -46,17 +48,42 @@
 
     button::before {
         content: "";
-        position: absolute;
+        /* position: absolute;
         left: 0;
-        top: 50%;
+        top: 50%; */
+
+        position: relative;
+        display: inline-block;
+        margin-right: 0.25rem;
+
         width: 0.5em;
         height: 0.5em;
-        transform: translate(-1px, -50%) rotate(-45deg);
+        transform: translate(-3px, calc(-50% + 2px)) rotate(-45deg);
         border-right: 0.15em solid currentColor;
         border-bottom: 0.15em solid currentColor;
     }
 
     button[aria-expanded="true"]::before {
-        transform: translateY(calc(-50% - 2px)) rotate(45deg);
+        transform: translate(-1px, -50%) rotate(45deg);
+    }
+
+    :where(button[aria-expanded] + div[id]) {
+        padding: var(--fndish-disclosure-padding);
+        padding-block-start: 0;
+    }
+
+    :where(summary + div),
+    summary::details-content {
+        padding: var(--fndish-disclosure-padding);
+        padding-block-start: 0;
+    }
+}
+
+
+@layer accordion.tokens {
+    :root {
+        --fndish-disclosure-padding: 0.5rem;
+        --fndish-disclosure-border: 1px solid #ccc;
+        --accordion-open-summary-color: #007BFF;
     }
 }
