@@ -344,28 +344,41 @@ class FoundationishAccordion extends HTMLElement {
         }
     }
 
+    closeCustomHTMLDisclosure() {
+
+        const disclosure = this.detectCustomHTML();
+
+        if ( !disclosure ) return;
+
+        this.#attributeChangeTriggeredByEvent = true;
+
+        try {
+            disclosure.trigger.setAttribute("aria-expanded", "false");
+            disclosure.panel.setAttribute("hidden", "");
+            this.removeAttribute(this.attr.opened);
+        } finally {
+            this.#attributeChangeTriggeredByEvent = false;
+        }
+    }
+
     _closeAllCustomHTMLDisclosures(target = event.target) {
 
-        const triggers = this.closest('accordion-items')?.querySelectorAll('accordion-item .disclosure > button[aria-expanded="true"]');
+        const accordionItems = this
+            .closest("accordion-items")
+            ?.querySelectorAll("accordion-item");
 
-        if ( triggers ) {
+        if ( !accordionItems ) return;
 
-            Array.from(triggers).forEach( button => {
+        accordionItems.forEach( item => {
 
-                if ( target === button ) return;
+            if (
+                item !== this
+                && typeof item.closeCustomHTMLDisclosure === "function"
+            ) {
+                item.closeCustomHTMLDisclosure();
+            }
 
-                button.setAttribute("aria-expanded", "false");
-
-                const panel = button.nextElementSibling;
-                if (panel) {
-                    panel.setAttribute("hidden", "");
-                }
-
-                //button.closest('accordion-item').removeAttribute('expanded');
-
-            });
-
-        }
+        });
     }
 
 
@@ -495,14 +508,15 @@ class FoundationishAccordion extends HTMLElement {
 
     /* NOTE: for <accordion-items /> */
     hasSingleSelectAttribute() {
-        if (
-            this.constructor.singleSelectParentAttribute === null
-            && this.closest('accordion-items')?.hasAttribute('single-select')
-        ) {
-            this.constructor.singleSelectParentAttribute = true;
-        }
+        return this.closest("accordion-items")?.hasAttribute("single-select") ?? false;
+        // if (
+        //     this.constructor.singleSelectParentAttribute === null
+        //     && this.closest('accordion-items')?.hasAttribute('single-select')
+        // ) {
+        //     this.constructor.singleSelectParentAttribute = true;
+        // }
 
-        return this.constructor.singleSelectParentAttribute;
+        // return this.constructor.singleSelectParentAttribute;
     }
 };
 
