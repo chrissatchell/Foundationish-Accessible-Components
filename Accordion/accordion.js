@@ -326,10 +326,6 @@ class FoundationishAccordion extends HTMLElement {
                     this._closeAllCustomHTMLDisclosures();
 
                     // TODO: allow for closing of a single open item if clicking on its trigger a close/collapse action (currently requires clicking on another item to close)
-
-                    if (this.hasAttribute(this.attr.opened) && event.target.getAttribute("aria-expanded") === "true") {
-                        this.removeAttribute(this.attr.opened);
-                    }
                 }
 
                 try {
@@ -340,22 +336,35 @@ class FoundationishAccordion extends HTMLElement {
                     // Update the 'opened' attribute with setOpenedAttribute()
                     this.setOpenedAttribute();
                 } finally {
+
                     this.#attributeChangeTriggeredByEvent = false;
+
                 }
             });
         }
     }
 
-    _closeAllCustomHTMLDisclosures() {
-        const disclosures = this.closest('accordion-items')?.querySelectorAll('accordion-item .disclosure > button[aria-expanded="true"]');
-        if (disclosures) {
-            disclosures.forEach(button => {
+    _closeAllCustomHTMLDisclosures(target = event.target) {
+
+        const triggers = this.closest('accordion-items')?.querySelectorAll('accordion-item .disclosure > button[aria-expanded="true"]');
+
+        if ( triggers ) {
+
+            Array.from(triggers).forEach( button => {
+
+                if ( target === button ) return;
+
                 button.setAttribute("aria-expanded", "false");
+
                 const panel = button.nextElementSibling;
                 if (panel) {
                     panel.setAttribute("hidden", "");
                 }
+
+                //button.closest('accordion-item').removeAttribute('expanded');
+
             });
+
         }
     }
 
@@ -409,9 +418,9 @@ class FoundationishAccordion extends HTMLElement {
     setOpenedAttribute() {
         const isOpen = this.getOpenedState();
         if (isOpen) {
-            this.setAttribute(`${this.attr.opened}`, "");
+            this.setAttribute('expanded', "");
         } else {
-            this.removeAttribute(`${this.attr.opened}`);
+            this.removeAttribute('expanded');
         }
     }
 

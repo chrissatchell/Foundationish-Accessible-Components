@@ -4,7 +4,13 @@
 
 /* Layers */
 @layer accordion;
-@layer accordion.reset, accordion.tokens, accordion.core, accordion.state;
+@layer
+    accordion.reset,
+    accordion.tokens,
+    accordion.core,
+    accordion.state,
+    accordion.theme,
+    accordion.utilities;
 
 /* Reset */
 @import "./styles/reset.css" layer(accordion.reset);
