@@ -54,13 +54,16 @@ class FoundationishAccordion extends HTMLElement {
     // This method is called whenever an observed attribute changes. It receives the name of the changed attribute, its old value, and its new value.
     // Fires whenever an observed attribute changes. It receives the name of the changed attribute, its old value, and its new value.
     attributeChangedCallback(attrName, oldValue, newValue) {
+
         if ( attrName === 'expanded' && this.detectCustomHTML() ) {
 
+            // external: removal of [expanded]
             if ( ( oldValue === '' && newValue === null ) && !this.#attributeChangeTriggeredByEvent ) {
 
                 this.clickCustomHTMLDisclosuresHandler(this.querySelector(".disclosure > button"));
                 console.log('This attribute change was caused externally.');
 
+            // external: addition of [expanded]
             } else if (!this.#attributeChangeTriggeredByEvent) {
 
                 this.clickCustomHTMLDisclosuresHandler(this.querySelector(".disclosure > button"));
@@ -70,14 +73,14 @@ class FoundationishAccordion extends HTMLElement {
 
         } else if ( attrName === 'expanded' && this.detectHTMLDetails() ) {
 
-            // removal of [expanded]
+            // external: removal of [expanded]
             if ( ( oldValue === '' && newValue === null ) && !this.#attributeChangeTriggeredByEvent ) {
                 this.querySelector("details").open = !this.getOpenedState();
             }
 
-            // addition of [expanded]
-            else if (!this.#attributeChangeTriggeredByEvent) {
-                this.querySelector("details").open = !this.getOpenedState();
+            // external: addition of [expanded]
+            else if ( ( oldValue === null && newValue === '' ) && !this.#attributeChangeTriggeredByEvent ) {
+                this.querySelector("details").open = true;
             }
 
         }
@@ -155,9 +158,9 @@ class FoundationishAccordion extends HTMLElement {
         // Ready to go! emit a custom event: "accordionitem:is-ready"
         this.onReadyEvent();
 
-        this.setOpenedAttribute();
-
         this.supportsDetailsName();
+
+        //this.setComponentOpenedAttribute();
 
         // Return something to detect inside init()
         return true;
@@ -174,6 +177,11 @@ class FoundationishAccordion extends HTMLElement {
         // Detect 'details' element
         if ( this.detectHTMLDetails() ) {
             this.setAttribute("provided-details",'');
+
+            if (this.querySelector("details").hasAttribute("open")) {
+                this.openedState = true;
+                this.setAttribute(this.attr.opened, '');
+            }
         }
 
         // Detect provided custom markup for a disclosure pattern
@@ -291,7 +299,45 @@ class FoundationishAccordion extends HTMLElement {
         /* A <details> element is provided */
 
         if ( this.detectHTMLDetails() ) {
+
             this.details = this.querySelector("details");
+
+            if ( this.hasSingleSelectAttribute() ) {
+
+                if ( this.supportsDetailsName() ) {
+
+                    // If the browser supports the name attribute on details elements,
+                    // we can rely on native grouping behavior.
+                    // We just need to ensure that all details elements within the same
+                    // accordion-items parent have the same name value.
+
+                    const detailsElements = Array.from(
+                        this.closest('accordion-items')?.querySelectorAll('accordion-item details')
+                    );
+
+                    //log(detailsElements);
+
+                    if ( detailsElements && detailsElements.length > 0 ) {
+
+                        let id = `fndish-details-${Math.random().toString(36).substr(2, 9)}`;
+                        for (const detail of detailsElements) {
+                            if ( !detail.hasAttribute('name') || detail.getAttribute('name').trim() === '' ) continue;
+                            id = detail.getAttribute('name');
+                            break;
+                        }
+
+                        detailsElements.forEach(detail => {
+                            detail.setAttribute('name', id);
+                        });
+                    }
+
+                }
+
+                // TODO: No support for [name] then close all other details elements when one is opened, to mimic the single-select behavior.
+                else {
+
+                }
+            }
 
             this.details.addEventListener("toggle", (event) => {
                 //this.toggleHTMLDetailsHandler();
@@ -303,7 +349,7 @@ class FoundationishAccordion extends HTMLElement {
 
                     // NOTE: Component attribute change occurs and calls attributeChangedCallback(),
                     //       so we can check the flag to avoid treating this as an external change...
-                    this.setOpenedAttribute();
+                    this.setComponentOpenedAttribute();
 
                 } finally {
                     // NOTE: The flag is reset after the attribute update,
@@ -333,8 +379,8 @@ class FoundationishAccordion extends HTMLElement {
                     this.clickCustomHTMLDisclosuresHandler(event.target);
 
                     // Get 'opened' state with getOpenedState()
-                    // Update the 'opened' attribute with setOpenedAttribute()
-                    this.setOpenedAttribute();
+                    // Update the 'opened' attribute with setComponentOpenedAttribute()
+                    this.setComponentOpenedAttribute();
                 } finally {
 
                     this.#attributeChangeTriggeredByEvent = false;
@@ -387,11 +433,11 @@ class FoundationishAccordion extends HTMLElement {
     */
 
     // Add click event listener to the button to toggle the visibility of the panel and update ARIA attributes accordingly
-    clickCustomHTMLDisclosuresHandler(target = event.target) {
-        console.log(target);
+    clickCustomHTMLDisclosuresHandler( target = event.target ) {
 
         let trigger = target;
         let panel = trigger.nextElementSibling;
+
         if ( trigger.getAttribute("aria-expanded") === "true" ) {
             trigger.setAttribute("aria-expanded", "false");
             panel.setAttribute("hidden", "");
@@ -428,7 +474,13 @@ class FoundationishAccordion extends HTMLElement {
         Attributes
     */
 
-    setOpenedAttribute() {
+    setComponentOpenedAttribute({add = false} = {}) {
+        // console.log(add);
+        // if (add) {
+        //     this.setAttribute('expanded', "");
+        //     return;
+        // }
+
         const isOpen = this.getOpenedState();
         if (isOpen) {
             this.setAttribute('expanded', "");

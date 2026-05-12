@@ -10,6 +10,7 @@
             body {
                 padding: 2rem;
                 font-family: sans-serif;
+                background-color: #193549;
             }
 
             h1 {
@@ -31,8 +32,10 @@
                 display: inline-block;
                 width: min(100%, 50rem);
                 padding: 1rem;
-                background-color: #000000;
+                background-color: #0000005e;
                 margin-bottom: 1rem;
+                border-radius: 1rem;
+                overflow:clip;
 
                 &:last-child {
                     margin-bottom: 0;
@@ -69,11 +72,35 @@
 
         </accordion-items>
 
-        <accordion-items role="region" aria-label="More Frequently Asked Questions">
+        <accordion-items role="region" aria-label="More Frequently Asked Questions" single-select>
 
             <accordion-item>
-                <details name="disclosure">
+                <details >
                     <summary>4. Lorem ipsum dolor sit.</summary>
+                    <div>
+                        <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos, qui repudiandae non facilis cum quidem beatae atque nam quae quam eaque itaque sit amet aperiam officia delectus magni ipsa. Rerum!</p>
+                    </div>
+                </details>
+            </accordion-item>
+            <accordion-item>
+                <details>
+                    <summary>5. Lorem ipsum dolor sit.</summary>
+                    <div>
+                        <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos, qui repudiandae non facilis cum quidem beatae atque nam quae quam eaque itaque sit amet aperiam officia delectus magni ipsa. Rerum!</p>
+                    </div>
+                </details>
+            </accordion-item>
+            <accordion-item>
+                <details>
+                    <summary>5. Lorem ipsum dolor sit.</summary>
+                    <div>
+                        <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos, qui repudiandae non facilis cum quidem beatae atque nam quae quam eaque itaque sit amet aperiam officia delectus magni ipsa. Rerum!</p>
+                    </div>
+                </details>
+            </accordion-item>
+            <accordion-item open>
+                <details>
+                    <summary>5. Lorem ipsum dolor sit.</summary>
                     <div>
                         <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos, qui repudiandae non facilis cum quidem beatae atque nam quae quam eaque itaque sit amet aperiam officia delectus magni ipsa. Rerum!</p>
                     </div>
