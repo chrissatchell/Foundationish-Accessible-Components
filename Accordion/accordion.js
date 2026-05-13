@@ -14,7 +14,7 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
     panelID = false;
 
     // Internal flag used to distinguish event-driven attribute updates from external changes
-    #attributeChangeTriggeredByEvent = false;
+    triggeredExternally = true;
 
 
     // Cache for details name attribute support (runs once across all instances)
@@ -92,16 +92,22 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
                             this.expandedAttrHandler().closeAll();
                         }
 
-                        console.log(`this.attributeChangeTriggeredByEvent: ${this.#attributeChangeTriggeredByEvent}`);
+                        if ( this.triggeredExternally === true ) {
+                            this.querySelector('details').setAttribute('open','');
+                        }
 
+                        this.triggeredExternally = true;
 
                     // REMOVED
                     } else if ( newValue === null ) {
 
-                        // let openAttr = this.querySelector('details').hasAttribute('open');
-                        // if ( openAttr ) this.querySelector('details').removeAttribute('open');
+                        console.log(`REMOVED, this.triggeredExternally: ${this.triggeredExternally}`);
 
-                        console.log(`this.attributeChangeTriggeredByEvent: ${this.#attributeChangeTriggeredByEvent}`);
+                        if ( this.triggeredExternally === true ) {
+                            this.querySelector('details').removeAttribute('open');
+                        }
+
+                        this.triggeredExternally = true;
 
                     }
 
@@ -185,7 +191,7 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
 
     setup() {
         // Ready to go! emit a custom event: "accordionitem:is-ready"
-        this.onReadyEvent();
+        this.emitReadyEvent();
 
         //this.setComponentOpenedAttribute();
 
@@ -364,7 +370,7 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
         Events
     */
 
-    onReadyEvent() {
+    emitReadyEvent() {
         this.dispatchEvent(
             new CustomEvent('accordionitem:is-ready', {
                 bubbles: true,
@@ -376,10 +382,26 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
         );
     }
 
+    emitBeforeToggleEvent() {
+        this.dispatchEvent( new CustomEvent( 'accordion:before-toggle', {
+            bubbles: true,
+            composed: true, // event can cross shadow DOM boundaries
+            detail: {
+                element: event.target,
+                expanded: this.hasAttribute( this.attr.opened ),
+                triggeredExternally: this.triggeredExternally
+            }
+        } ) );
+    }
+
     delegateEvents() {
 
         /* On Click: Update WC attr to run attributeChangedCallback */
         this.addEventListener( 'click', ( event ) => {
+
+            this.triggeredExternally = false;
+
+            this.emitBeforeToggle();
 
             if ( this.hasAttribute( this.attr.opened ) ) this.removeAttribute( this.attr.opened );
 
@@ -388,14 +410,21 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
         } );
 
         /* On Toggle: Update WC attr to run attributeChangedCallback */
-        this.addEventListener("toggle", (event) => {
-            this.#attributeChangeTriggeredByEvent = true;
+        // this.addEventListener("toggle", (event) => {
 
-            if ( this.hasAttribute( this.attr.opened ) ) this.removeAttribute( this.attr.opened );
+        //     console.log('toggle');
 
-            else this.setAttribute( this.attr.opened, '' );
+        //     if ( this.hasAttribute( this.attr.opened ) ) this.removeAttribute( this.attr.opened );
 
-        } );
+        //     else this.setAttribute( this.attr.opened, '' );
+
+        // } );
+
+        this.addEventListener( 'accordion:before-toggle', event => {
+            setTimeout(function () {
+                return true;
+            }, 10000);
+        });
     }
 
 
