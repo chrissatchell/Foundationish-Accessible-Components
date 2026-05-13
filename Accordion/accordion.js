@@ -31,8 +31,6 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
     // Observe the "opened" and "is-open" attributes for changes.
     // The browser now watches for changes to this attribute and calls attributeChangedCallback() when it changes.
     static get observedAttributes() {
-
-
         return ['ready', 'expanded'];
     }
 
@@ -86,11 +84,24 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
                     // ADDED
                     if ( newValue === '' ) {
 
+                        // let openAttr = this.querySelector('details').hasAttribute('open');
+                        // if ( ! openAttr ) this.querySelector('details').setAttribute('open', '');
+
+                         /* Except for the target, close all disclosures */
+                        if ( this.hasSingleSelectAttribute() ) {
+                            this.expandedAttrHandler().closeAll();
+                        }
+
+                        console.log(`this.attributeChangeTriggeredByEvent: ${this.#attributeChangeTriggeredByEvent}`);
 
 
                     // REMOVED
                     } else if ( newValue === null ) {
 
+                        // let openAttr = this.querySelector('details').hasAttribute('open');
+                        // if ( openAttr ) this.querySelector('details').removeAttribute('open');
+
+                        console.log(`this.attributeChangeTriggeredByEvent: ${this.#attributeChangeTriggeredByEvent}`);
 
                     }
 
@@ -102,19 +113,6 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
 
         }
 
-        // if ( this.detectHTMLDetails() ) {
-
-        //     // external: removal of [expanded]
-        //     if ( ( oldValue === '' && newValue === null ) && !this.#attributeChangeTriggeredByEvent ) {
-        //         this.querySelector("details").open = !this.getOpenedState();
-        //     }
-
-        //     // external: addition of [expanded]
-        //     else if ( ( oldValue === null && newValue === '' ) && !this.#attributeChangeTriggeredByEvent ) {
-        //         this.querySelector("details").open = true;
-        //     }
-
-        // }
     }
 
 
@@ -189,8 +187,6 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
         // Ready to go! emit a custom event: "accordionitem:is-ready"
         this.onReadyEvent();
 
-        this.supportsDetailsName();
-
         //this.setComponentOpenedAttribute();
 
         // Return something to detect inside init()
@@ -209,13 +205,15 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
         // using a button and a div
         if ( this.detectCustomHTML() ) {
             this.setAttribute('type','custom');
-            this.renderCustomHTMLDisclosure().setWrapperForDisclosure();
-            this.renderCustomHTMLDisclosure().setAttsForDisclosure();
+            this.#renderCustomHTMLDisclosure().setWrapperForDisclosure();
+            this.#renderCustomHTMLDisclosure().setAttsForDisclosure();
         }
 
         // Detect 'details' element
         if ( this.detectHTMLDetails() ) {
             this.setAttribute('type','details');
+            this.supportsDetailsName();
+            this.#renderHTMLDetailsDisclosure();
         }
 
 
@@ -227,12 +225,7 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
         return true;
     }
 
-
-    /*
-        4.1 Render Helpers
-    */
-
-    renderCustomHTMLDisclosure() {
+    #renderCustomHTMLDisclosure() {
 
         // Generate a unique ID for the panel if it doesn't already have one
         let _generateUniqueID = () => {
@@ -306,9 +299,66 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
         // addWiringForDisclosure();
     }
 
-    renderHTMLDetailsDisclosure() {
+    #renderHTMLDetailsDisclosure() {
 
+        if ( this.querySelector('details').hasAttribute('open') ) {
+            this.setAttribute('expanded', '');
+        }
+
+        if ( this.hasAttribute('expanded') ) {
+            this.querySelector('details').setAttribute('open', '');
+        }
+
+
+        /*
+            Add the name attr and the same value for each to enable expansion of one disclosre at a time
+
+            NOTE:
+                If the browser supports the name attribute on details elements, we can rely on
+                native grouping behavior. We just need to ensure that all details elements within
+                the same accordion-items parent have the same name value.
+        */
+
+        if ( this.hasSingleSelectAttribute() ) {
+
+            if ( this.supportsDetailsName() ) {
+
+                const detailsElements = Array.from(
+                    this.closest('accordion-items')?.querySelectorAll('accordion-item details')
+                );
+
+                if ( detailsElements && detailsElements.length > 0 ) {
+
+                    let id = `fndish-details-${Math.random().toString(36).substr(2, 9)}`;
+
+                    for ( const detail of detailsElements ) {
+
+                        // Skip element if there is no name attr or the value is empty.
+                        if (
+                            ! detail.hasAttribute( 'name' )
+                            || detail.getAttribute( 'name' ).trim() === ''
+                        ) continue;
+
+                        // Use the value of the first element with a name attr.
+                        id = detail.getAttribute('name');
+                        break;
+
+                    }
+
+                    detailsElements.forEach( detail => {
+                        detail.setAttribute( 'name', id );
+                    });
+                }
+
+            }
+
+            // TODO: No support for [name] then close all other details elements when one is opened, to mimic the single-select behavior.
+            else {
+
+            }
+        }
     }
+
 
     /*
         Events
@@ -339,22 +389,19 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
 
         /* On Toggle: Update WC attr to run attributeChangedCallback */
         this.addEventListener("toggle", (event) => {
+            this.#attributeChangeTriggeredByEvent = true;
 
-            if ( this.detectHTMLDetails() && event.target.matches("details") ) {
-                // The toggle event fires after the details element has already toggled its open state, so we can directly read the new state here.
-                // We just need to set the flag to indicate that any attribute changes triggered by this event should not be treated as external changes.
-                this.#attributeChangeTriggeredByEvent = true;
+            if ( this.hasAttribute( this.attr.opened ) ) this.removeAttribute( this.attr.opened );
 
-                try {
-                    this.openedState = this.getOpenedState();
-                    this.setComponentOpenedAttribute();
-                } finally {
-                    this.#attributeChangeTriggeredByEvent = false;
-                }
-            }
+            else this.setAttribute( this.attr.opened, '' );
 
         } );
     }
+
+
+    /*
+        Handlers
+    */
 
     expandedAttrHandler() {
 
@@ -373,16 +420,17 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
         };
 
         let closeAll = () => {
-            /* Except for the target, close all disclosures */
+
             let accordionItems = this.closest("accordion-items")?.querySelectorAll("accordion-item");
 
             if ( ! accordionItems ) return;
 
             [...accordionItems].forEach( item => {
 
+                // Except for the target, close all disclosures
                 if ( item !== this ) item.removeAttribute(this.attr.opened);
 
-            });
+            } );
         }
 
         return {
@@ -390,148 +438,16 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
             closeAll
         };
 
-        //setAria(this.querySelector(".disclosure > button"));
-
     }
 
-    onToggleEvent() {
-
-        let { log } = console;
-
-        /* A <details> element is provided */
-
-        if ( this.detectHTMLDetails() ) {
-
-            this.details = this.querySelector("details");
-
-            if ( this.hasSingleSelectAttribute() ) {
-
-                if ( this.supportsDetailsName() ) {
-
-                    // If the browser supports the name attribute on details elements,
-                    // we can rely on native grouping behavior.
-                    // We just need to ensure that all details elements within the same
-                    // accordion-items parent have the same name value.
-
-                    const detailsElements = Array.from(
-                        this.closest('accordion-items')?.querySelectorAll('accordion-item details')
-                    );
-
-                    //log(detailsElements);
-
-                    if ( detailsElements && detailsElements.length > 0 ) {
-
-                        let id = `fndish-details-${Math.random().toString(36).substr(2, 9)}`;
-                        for (const detail of detailsElements) {
-                            if ( !detail.hasAttribute('name') || detail.getAttribute('name').trim() === '' ) continue;
-                            id = detail.getAttribute('name');
-                            break;
-                        }
-
-                        detailsElements.forEach(detail => {
-                            detail.setAttribute('name', id);
-                        });
-                    }
-
-                }
-
-                // TODO: No support for [name] then close all other details elements when one is opened, to mimic the single-select behavior.
-                else {
-
-                }
-            }
-
-            this.details.addEventListener("toggle", (event) => {
-                //this.toggleHTMLDetailsHandler();
-
-                this.#attributeChangeTriggeredByEvent = true;
-                try {
-
-                    this.openedState = this.getOpenedState();
-
-                    // NOTE: Component attribute change occurs and calls attributeChangedCallback(),
-                    //       so we can check the flag to avoid treating this as an external change...
-                    this.setComponentOpenedAttribute();
-
-                } finally {
-                    // NOTE: The flag is reset after the attribute update,
-                    // so that any subsequent attribute changes that are not triggered by this event will be treated as external changes.
-                    this.#attributeChangeTriggeredByEvent = false;
-                }
-            });
-        }
-
-    }
-
-    closeCustomHTMLDisclosure() {
-
-        const disclosure = this.detectCustomHTML();
-
-        if ( !disclosure ) return;
-
-        this.#attributeChangeTriggeredByEvent = true;
-
-        try {
-            disclosure.trigger.setAttribute("aria-expanded", "false");
-            disclosure.panel.setAttribute("hidden", "");
-            this.removeAttribute(this.attr.opened);
-        } finally {
-            this.#attributeChangeTriggeredByEvent = false;
-        }
-    }
-
-    _closeAllCustomHTMLDisclosures(target = event.target) {
-
-        const accordionItems = this
-            .closest("accordion-items")
-            ?.querySelectorAll("accordion-item");
-
-        if ( !accordionItems ) return;
-
-        accordionItems.forEach( item => {
-
-            if (
-                item !== this
-                && typeof item.closeCustomHTMLDisclosure === "function"
-            ) {
-                item.closeCustomHTMLDisclosure();
-            }
-
-        });
-    }
 
 
     /*
-        Handlers
+        State
     */
 
-    // Add click event listener to the button to toggle the visibility of the panel and update ARIA attributes accordingly
-    clickCustomHTMLDisclosuresHandler( target = event.target ) {
-
-        let trigger = target;
-        let panel = trigger.nextElementSibling;
-
-        if ( trigger.getAttribute("aria-expanded") === "true" ) {
-            trigger.setAttribute("aria-expanded", "false");
-            panel.setAttribute("hidden", "");
-
-        } else {
-            trigger.setAttribute("aria-expanded", "true");
-            panel.removeAttribute("hidden");
-        }
-    }
-
-    toggleHTMLDetailsHandler() {
-        /* Native HTML element */
-    }
-
-
-    /*
-        5. State
-    */
-
-    getAttrState(stateName) {
-        return this.getAttribute(stateName) ? true : false;
+    getStateFromAttr( attrName ) {
+        return this.getAttribute( attrName ) ? true : false;
     }
 
     getOpenedState() {
@@ -547,28 +463,40 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
     }
 
 
+
     /*
         Attributes
     */
 
-    setComponentOpenedAttribute({add = false} = {}) {
-        // console.log(add);
-        // if (add) {
-        //     this.setAttribute('expanded', "");
-        //     return;
-        // }
 
-        const isOpen = this.getOpenedState();
-        if (isOpen) {
-            this.setAttribute('expanded', "");
-        } else {
-            this.removeAttribute('expanded');
+
+    /*
+        Detection
+    */
+
+    /* Detect details element */
+    detectHTMLDetails() {
+        let $details = this.querySelector("details");
+        if ( $details ) {
+            return !!$details;
         }
     }
 
-    /*
-        6. Detection
-    */
+    detectCustomHTML() {
+        let trigger = this.querySelector("button"),
+            panel = this.querySelector("button + div");
+        if ( trigger && panel ) {
+            return {
+                trigger,
+                panel
+            };
+        }
+        return false;
+    }
+
+    hasSingleSelectAttribute() {
+        return this.closest("accordion-items")?.hasAttribute("single-select") ?? false;
+    }
 
     /**
      * Detect if browser supports the name attribute on details elements
@@ -576,6 +504,7 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
      * Result is cached to run detection only once across all instances
      * @returns {boolean} True if the browser supports the name attribute on details elements
      */
+
     supportsDetailsName() {
         let {log} = console;
 
@@ -615,38 +544,6 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
         return this.constructor.detailsNameSupport;
     }
 
-    /* Detect details element */
-    detectHTMLDetails() {
-        let $details = this.querySelector("details");
-        if ( $details ) {
-            return !!$details;
-        }
-    }
-
-    detectCustomHTML() {
-        let trigger = this.querySelector("button"),
-            panel = this.querySelector("button + div");
-        if ( trigger && panel ) {
-            return {
-                trigger,
-                panel
-            };
-        }
-        return false;
-    }
-
-    /* NOTE: for <accordion-items /> */
-    hasSingleSelectAttribute() {
-        return this.closest("accordion-items")?.hasAttribute("single-select") ?? false;
-        // if (
-        //     this.constructor.  === null
-        //     && this.closest('accordion-items')?.hasAttribute('single-select')
-        // ) {
-        //     this.constructor.singleSelectParentAttribute = true;
-        // }
-
-        // return this.constructor.singleSelectParentAttribute;
-    }
 } );
 
 
