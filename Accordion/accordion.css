@@ -54,14 +54,6 @@
         font-weight: bold;
     }
 
-    button::before,
-    button::after {
-        position: relative;
-        display: inline-block;
-        width: 0.5em;
-        height: 0.5em;
-    }
-
     button::before {
         /*
         content: "";
@@ -76,21 +68,42 @@
         transform: translate(-1px, -50%) rotate(45deg);
     }
 
-    button {
-        align-items: center;
-        justify-content: space-between;
+    .right-icon {
+        --expanded-icon-rotation: 45deg;
 
-        &::after {
-            content: "";
-            border-right: 0.15em solid currentColor;
-            border-bottom: 0.15em solid currentColor;
-            margin-right: 0.25rem;
-            /* margin-left: auto; */
-            transform: translate(-1px, -0.5px) rotate(-45deg);
+        :where(button[aria-expanded], summary) {
+            display: flex;
+            flex-flow: row wrap;
+            align-items: center;
+            justify-content: space-between;
+            padding-inline-start: calc(14px/16px*1rem);
+
+            &::after {
+            }
+
+            &::after {
+                content: "";
+                border-right: 0.15em solid currentColor;
+                border-bottom: 0.15em solid currentColor;
+                margin-right: 0.45rem;
+                /* margin-left: auto; */
+                transform: translate(-1px, -0.5px) rotate(-45deg);
+
+                position: relative;
+                display: inline-block;
+                width: 0.5em;
+                height: 0.5em;
+                transition: 0.1s transform ease-out;
+                pointer-events: none;
+            }
+
+            &[aria-expanded="true"]::after {
+                transform: translate(-1px, -0.5px) rotate(var(--expanded-icon-rotation, 45deg));
+            }
         }
 
-        &[aria-expanded="true"]::after {
-            transform: rotate(45deg);
+        details[open] summary::after {
+            transform: translate(-1px, -0.5px) rotate(var(--expanded-icon-rotation, 45deg));
         }
     }
 
@@ -105,6 +118,27 @@
     summary::details-content {
         padding: var(--fndish-disclosure-padding);
         padding-block-start: 0;
+    }
+
+    details {
+        & summary {
+            list-style: none;
+
+            &::marker {
+                content: none;
+            }
+
+            &::-webkit-details-marker {
+                display: none;
+            }
+        }
+
+        & summary + :where(*) {
+            padding: var(--fndish-disclosure-padding);
+            padding-block-start: 0;
+            padding-block-end: 1.05rem;
+            padding-inline-start: 1rem
+        }
     }
 }
 
