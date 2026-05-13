@@ -77,6 +77,31 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
 
         }
 
+        if ( this.detectHTMLDetails() ) {
+
+            switch ( attrName ) {
+
+                case 'expanded':
+
+                    // ADDED
+                    if ( newValue === '' ) {
+
+
+
+                    // REMOVED
+                    } else if ( newValue === null ) {
+
+
+                    }
+
+                    break;
+
+                default:
+                    break;
+            }
+
+        }
+
         // if ( this.detectHTMLDetails() ) {
 
         //     // external: removal of [expanded]
@@ -180,24 +205,19 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
     render() {
         let { log } = console;
 
-        // Detect 'details' element
-        if ( this.detectHTMLDetails() ) {
-            this.setAttribute("provided-details",'');
-
-            if (this.querySelector("details").hasAttribute("open")) {
-                // this.openedState = true;
-                this.setAttribute(this.attr.opened, '');
-            }
-        }
-
         // Detect provided custom markup for a disclosure pattern
         // using a button and a div
-        if (
-            this.detectCustomHTML()
-            && !this.detectHTMLDetails()
-        ) {
-            this.renderCustomHTMLDisclosure();
+        if ( this.detectCustomHTML() ) {
+            this.setAttribute('type','custom');
+            this.renderCustomHTMLDisclosure().setWrapperForDisclosure();
+            this.renderCustomHTMLDisclosure().setAttsForDisclosure();
         }
+
+        // Detect 'details' element
+        if ( this.detectHTMLDetails() ) {
+            this.setAttribute('type','details');
+        }
+
 
         // Event listeners for details toggle and custom disclosure click
         // this.onToggleEvent();
@@ -214,10 +234,8 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
 
     renderCustomHTMLDisclosure() {
 
-        this.setAttribute("provided-markup",'');
-
         // Generate a unique ID for the panel if it doesn't already have one
-        let generateUniqueID = () => {
+        let _generateUniqueID = () => {
             //return "disclosure-panel-" + Math.random().toString(36).substr(2, 9);
             let id = Math.floor(Math.random() * 100000);
 
@@ -249,12 +267,12 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
         };
 
         // Set the necessary ARIA attributes on the button and panel for accessibility
-        let setAttsForDisclosure = () => {
-            let trigger = this.querySelector(".disclosure > button"),
-                panel = this.querySelector(".disclosure > div");
+        let setAttsForDisclosure = ( button, content ) => {
+            let trigger = button || this.querySelector(".disclosure > button"),
+                panel = content || this.querySelector(".disclosure > div");
 
             if (!panel.id) {
-                this.panelID = generateUniqueID();
+                this.panelID = _generateUniqueID();
                 panel.id = this.panelID;
             }
 
@@ -276,9 +294,14 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
             }
         }
 
-        setWrapperForDisclosure();
+        return {
+            setWrapperForDisclosure,
+            setAttsForDisclosure
+        }
 
-        setAttsForDisclosure();
+        //setWrapperForDisclosure();
+
+        //setAttsForDisclosure();
 
         // addWiringForDisclosure();
     }

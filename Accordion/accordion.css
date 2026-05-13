@@ -93,7 +93,7 @@
                 display: inline-block;
                 width: 0.5em;
                 height: 0.5em;
-                transition: 0.1s transform ease-out;
+                transition: 0.05s transform ease-out;
                 pointer-events: none;
             }
 
