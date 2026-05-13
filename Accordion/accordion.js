@@ -1,12 +1,10 @@
-class FoundationishAccordion extends HTMLElement {
+customElements.define( 'accordion-item', class FoundationishAccordion extends HTMLElement {
 
     /**
      * Fields
      */
 
     openedState = false;
-
-    toggleCount = 0;
 
     attr = {
         ready: "ready",
@@ -18,22 +16,13 @@ class FoundationishAccordion extends HTMLElement {
     // Internal flag used to distinguish event-driven attribute updates from external changes
     #attributeChangeTriggeredByEvent = false;
 
-    /**
-     * NOTE:
-     *  Added a static property detailsNameSupport to store the cached result across all instances
-     *  Modified supportsDetailsName() to check if the test has already run — if so, it returns the cached value immediately
-     *  Only on the first call does it perform the actual detection test
-     *  Now when you have 3 instances of the accordion element, the feature detection only runs once, and subsequent instances reuse the
-     *  cached result.
-     */
 
     // Cache for details name attribute support (runs once across all instances)
     static detailsNameSupport = null;
 
 
     // Cached detect parent accordion-items element for single-select attribute
-    static singleSelectParentAttribute = null;
-
+    static singleSelectSupport = null;
 
     /**
      * Observer attributes
@@ -43,8 +32,8 @@ class FoundationishAccordion extends HTMLElement {
     // The browser now watches for changes to this attribute and calls attributeChangedCallback() when it changes.
     static get observedAttributes() {
 
-        // TODO: this.attr to array and loop through it here.
-        return ['expanded', 'is-opened'];
+
+        return ['ready', 'expanded'];
     }
 
     /**
@@ -55,35 +44,52 @@ class FoundationishAccordion extends HTMLElement {
     // Fires whenever an observed attribute changes. It receives the name of the changed attribute, its old value, and its new value.
     attributeChangedCallback(attrName, oldValue, newValue) {
 
-        if ( attrName === 'expanded' && this.detectCustomHTML() ) {
+        if ( this.detectCustomHTML() ) {
 
-            // external: removal of [expanded]
-            if ( ( oldValue === '' && newValue === null ) && !this.#attributeChangeTriggeredByEvent ) {
+            switch ( attrName ) {
 
-                this.clickCustomHTMLDisclosuresHandler(this.querySelector(".disclosure > button"));
-                console.log('This attribute change was caused externally.');
+                case 'expanded':
 
-            // external: addition of [expanded]
-            } else if (!this.#attributeChangeTriggeredByEvent) {
+                    // ADDED
+                    if ( newValue === '' ) {
 
-                this.clickCustomHTMLDisclosuresHandler(this.querySelector(".disclosure > button"));
-                console.log('This attribute change was caused externally.');
+                        // Update aria for trigger and panel
+                        this.expandedAttrHandler().setAria();
 
-            }
+                        /* Except for the target, close all disclosures */
+                        if ( this.hasSingleSelectAttribute() ) {
+                            this.expandedAttrHandler().closeAll();
+                        }
 
-        } else if ( attrName === 'expanded' && this.detectHTMLDetails() ) {
+                    // REMOVED
+                    } else if ( newValue === null ) {
 
-            // external: removal of [expanded]
-            if ( ( oldValue === '' && newValue === null ) && !this.#attributeChangeTriggeredByEvent ) {
-                this.querySelector("details").open = !this.getOpenedState();
-            }
+                        // Update aria for trigger and panel
+                        this.expandedAttrHandler().setAria();
 
-            // external: addition of [expanded]
-            else if ( ( oldValue === null && newValue === '' ) && !this.#attributeChangeTriggeredByEvent ) {
-                this.querySelector("details").open = true;
+                    }
+
+                    break;
+
+                default:
+                    break;
             }
 
         }
+
+        // if ( this.detectHTMLDetails() ) {
+
+        //     // external: removal of [expanded]
+        //     if ( ( oldValue === '' && newValue === null ) && !this.#attributeChangeTriggeredByEvent ) {
+        //         this.querySelector("details").open = !this.getOpenedState();
+        //     }
+
+        //     // external: addition of [expanded]
+        //     else if ( ( oldValue === null && newValue === '' ) && !this.#attributeChangeTriggeredByEvent ) {
+        //         this.querySelector("details").open = true;
+        //     }
+
+        // }
     }
 
 
@@ -179,7 +185,7 @@ class FoundationishAccordion extends HTMLElement {
             this.setAttribute("provided-details",'');
 
             if (this.querySelector("details").hasAttribute("open")) {
-                this.openedState = true;
+                // this.openedState = true;
                 this.setAttribute(this.attr.opened, '');
             }
         }
@@ -190,12 +196,12 @@ class FoundationishAccordion extends HTMLElement {
             this.detectCustomHTML()
             && !this.detectHTMLDetails()
         ) {
-            this.setAttribute("provided-markup",'');
             this.renderCustomHTMLDisclosure();
         }
 
         // Event listeners for details toggle and custom disclosure click
-        this.onToggleEvent();
+        // this.onToggleEvent();
+        this.delegateEvents();
 
         // Return something to detect inside init()
         return true;
@@ -207,6 +213,8 @@ class FoundationishAccordion extends HTMLElement {
     */
 
     renderCustomHTMLDisclosure() {
+
+        this.setAttribute("provided-markup",'');
 
         // Generate a unique ID for the panel if it doesn't already have one
         let generateUniqueID = () => {
@@ -275,6 +283,9 @@ class FoundationishAccordion extends HTMLElement {
         // addWiringForDisclosure();
     }
 
+    renderHTMLDetailsDisclosure() {
+
+    }
 
     /*
         Events
@@ -290,6 +301,74 @@ class FoundationishAccordion extends HTMLElement {
                 }
             } )
         );
+    }
+
+    delegateEvents() {
+
+        /* On Click: Update WC attr to run attributeChangedCallback */
+        this.addEventListener( 'click', ( event ) => {
+
+            if ( this.hasAttribute( this.attr.opened ) ) this.removeAttribute( this.attr.opened );
+
+            else this.setAttribute( this.attr.opened, '' );
+
+        } );
+
+        /* On Toggle: Update WC attr to run attributeChangedCallback */
+        this.addEventListener("toggle", (event) => {
+
+            if ( this.detectHTMLDetails() && event.target.matches("details") ) {
+                // The toggle event fires after the details element has already toggled its open state, so we can directly read the new state here.
+                // We just need to set the flag to indicate that any attribute changes triggered by this event should not be treated as external changes.
+                this.#attributeChangeTriggeredByEvent = true;
+
+                try {
+                    this.openedState = this.getOpenedState();
+                    this.setComponentOpenedAttribute();
+                } finally {
+                    this.#attributeChangeTriggeredByEvent = false;
+                }
+            }
+
+        } );
+    }
+
+    expandedAttrHandler() {
+
+        let setAria = (target = this.querySelector(".disclosure > button") ) => {
+            let trigger = target;
+            let panel = trigger.nextElementSibling;
+
+            if ( trigger.getAttribute("aria-expanded") === "true" ) {
+                trigger.setAttribute("aria-expanded", "false");
+                panel.setAttribute("hidden", "");
+
+            } else {
+                trigger.setAttribute("aria-expanded", "true");
+                panel.removeAttribute("hidden");
+            }
+        };
+
+        let closeAll = () => {
+            /* Except for the target, close all disclosures */
+            let accordionItems = this.closest("accordion-items")?.querySelectorAll("accordion-item");
+
+            if ( ! accordionItems ) return;
+
+            [...accordionItems].forEach( item => {
+
+                if ( item !== this ) item.removeAttribute(this.attr.opened);
+
+            });
+        }
+
+        return {
+            setAria,
+            closeAll
+        };
+
+        //setAria(this.querySelector(".disclosure > button"));
+
     }
 
     onToggleEvent() {
@@ -359,35 +438,6 @@ class FoundationishAccordion extends HTMLElement {
             });
         }
 
-        /* Custom HTML is provided */
-
-        if ( this.detectCustomHTML() ) {
-
-            this.detectCustomHTML().trigger.addEventListener("click", (event) => {
-
-                this.#attributeChangeTriggeredByEvent = true;
-
-                if (this.hasSingleSelectAttribute()) {
-
-                    this._closeAllCustomHTMLDisclosures();
-
-                    // TODO: allow for closing of a single open item if clicking on its trigger a close/collapse action (currently requires clicking on another item to close)
-                }
-
-                try {
-                    // Expand or collapse
-                    this.clickCustomHTMLDisclosuresHandler(event.target);
-
-                    // Get 'opened' state with getOpenedState()
-                    // Update the 'opened' attribute with setComponentOpenedAttribute()
-                    this.setComponentOpenedAttribute();
-                } finally {
-
-                    this.#attributeChangeTriggeredByEvent = false;
-
-                }
-            });
-        }
     }
 
     closeCustomHTMLDisclosure() {
@@ -456,6 +506,10 @@ class FoundationishAccordion extends HTMLElement {
     /*
         5. State
     */
+
+    getAttrState(stateName) {
+        return this.getAttribute(stateName) ? true : false;
+    }
 
     getOpenedState() {
         let {log} = console;
@@ -562,7 +616,7 @@ class FoundationishAccordion extends HTMLElement {
     hasSingleSelectAttribute() {
         return this.closest("accordion-items")?.hasAttribute("single-select") ?? false;
         // if (
-        //     this.constructor.singleSelectParentAttribute === null
+        //     this.constructor.  === null
         //     && this.closest('accordion-items')?.hasAttribute('single-select')
         // ) {
         //     this.constructor.singleSelectParentAttribute = true;
@@ -570,6 +624,6 @@ class FoundationishAccordion extends HTMLElement {
 
         // return this.constructor.singleSelectParentAttribute;
     }
-};
+} );
 
-customElements.define( 'accordion-item', FoundationishAccordion );
+

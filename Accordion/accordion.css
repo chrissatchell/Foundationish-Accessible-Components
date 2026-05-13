@@ -25,7 +25,7 @@
     }
 
     summary,
-    .disclosure > button[aria-expanded] {
+    button[aria-expanded] {
         cursor: pointer;
         font-weight: bold;
         padding: var(--fndish-disclosure-padding, 0.5rem);
@@ -37,7 +37,9 @@
     }
 
     .disclosure > button[aria-expanded] {
-        display: block;
+        display: flex;
+        flex-flow: row wrap;
+        /* display: block; */
         width: 100%;
         text-align: left;
     }
@@ -52,30 +54,51 @@
         font-weight: bold;
     }
 
-    button::before {
-        content: "";
-        /* position: absolute;
-        left: 0;
-        top: 50%; */
-
+    button::before,
+    button::after {
         position: relative;
         display: inline-block;
-        margin-right: 0.25rem;
-
         width: 0.5em;
         height: 0.5em;
-        transform: translate(-3px, calc(-50% + 2px)) rotate(-45deg);
+    }
+
+    button::before {
+        /*
+        content: "";
         border-right: 0.15em solid currentColor;
         border-bottom: 0.15em solid currentColor;
+        margin-right: 0.25rem;
+        transform: translate(-3px, calc(-50% + 2px)) rotate(-45deg);
+        */
     }
 
     button[aria-expanded="true"]::before {
         transform: translate(-1px, -50%) rotate(45deg);
     }
 
+    button {
+        align-items: center;
+        justify-content: space-between;
+
+        &::after {
+            content: "";
+            border-right: 0.15em solid currentColor;
+            border-bottom: 0.15em solid currentColor;
+            margin-right: 0.25rem;
+            /* margin-left: auto; */
+            transform: translate(-1px, -0.5px) rotate(-45deg);
+        }
+
+        &[aria-expanded="true"]::after {
+            transform: rotate(45deg);
+        }
+    }
+
     :where(button[aria-expanded] + div[id]) {
         padding: var(--fndish-disclosure-padding);
         padding-block-start: 0;
+        padding-block-end: 1.05rem;
+        padding-inline-start: 1rem
     }
 
     :where(summary + div),
@@ -90,6 +113,6 @@
     :root {
         --fndish-disclosure-padding: 0.5rem;
         --fndish-disclosure-border: 1px solid #ccc;
-        --accordion-open-summary-color: #007BFF;
+        --accordion-open-summary-color: white;
     }
 }
